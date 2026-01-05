@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code
+.claude/
+
+# Reference materials (external projects)
+references/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local

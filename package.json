@@ -1,0 +1,41 @@
+{
+  "name": "devonthink-cli",
+  "version": "1.0.0",
+  "description": "Command-line interface for DEVONthink 4 on macOS",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "dt": "./bin/dt.js"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "lint": "eslint src/",
+    "completions:bash": "node bin/dt.js completion bash",
+    "completions:zsh": "node bin/dt.js completion zsh",
+    "completions:fish": "node bin/dt.js completion fish"
+  },
+  "keywords": [
+    "devonthink",
+    "macos",
+    "cli",
+    "jxa",
+    "automation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "os": [
+    "darwin"
+  ],
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {},
+  "files": [
+    "bin/",
+    "src/",
+    "commands/"
+  ]
+}
