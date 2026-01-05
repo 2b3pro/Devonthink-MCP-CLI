@@ -87,9 +87,38 @@ dt get selection
 
 # Get word concordance (word frequency list)
 dt get concordance <uuid>
+```
 
+### Transcribe
+
+```bash
 # Transcribe speech/text from audio/video/image
-dt get transcribe <uuid> --language en
+dt transcribe <uuid>
+dt tr <uuid>  # alias
+
+# With language and no timestamps
+dt transcribe <uuid> --language en --no-timestamps
+
+# Use AI to clean up transcription (fix grammar, formatting)
+dt transcribe <uuid> --ai-cleanup
+
+# Custom AI prompt
+dt transcribe <uuid> --ai-prompt "Format as bullet points"
+
+# AI cleanup without keeping raw transcription
+dt transcribe <uuid> --ai-cleanup --no-raw
+
+# Just output the cleaned text
+dt transcribe <uuid> --ai-cleanup --no-raw --quiet
+
+# Save transcription as markdown document (defaults to source location)
+dt transcribe <uuid> --save
+
+# Save to specific database and group with custom name
+dt transcribe <uuid> --save -d "Notes" -g "/Transcripts" -n "Meeting Notes"
+
+# Save with tags
+dt transcribe <uuid> --save -t transcript -t meeting
 ```
 
 ### List Records
@@ -120,8 +149,12 @@ dt create record --name "Title" --type markdown --database "Inbox" --content "# 
 # Create from file content
 dt create record --name "Note" --type txt --database "Inbox" --file ./notes.txt
 
-# Create a bookmark
+# Create a bookmark (via record command)
 dt create record --name "Example" --type bookmark --database "Inbox" --url "https://example.com"
+
+# Create a bookmark (dedicated command)
+dt create bookmark "https://example.com" --name "Example" --database "Inbox"
+dt create bm "file:///Users/me/Documents" --name "My Docs" --database "Inbox"
 
 # Create a group/folder
 dt create record --name "New Folder" --type group --database "Research" --group "/Projects"
@@ -129,18 +162,20 @@ dt create record --name "New Folder" --type group --database "Research" --group 
 # Create with tags
 dt create record --name "Note" --type markdown --database "Inbox" -t "important" -t "review"
 
-# Create Markdown from web URL
-dt create markdown "https://example.com/article" --database "Research"
+# Create Markdown from web URL (with tags)
+dt create markdown "https://example.com/article" --database "Research" -t article -t web
 
-# Create PDF from web URL
-dt create pdf "https://example.com/page" --database "Archive"
+# Create PDF from web URL (with tags)
+dt create pdf "https://example.com/page" --database "Archive" -t archive
 
-# Create web document from URL
-dt create web "https://example.com" --database "Web"
+# Create web document from URL (with tags)
+dt create web "https://example.com" --database "Web" -t reference
 
-# Generate AI image from prompt
-dt create image "a sunset over mountains" --name "Sunset" --database "Images" --engine dalle3
+# Generate AI image from prompt (with tags)
+dt create image "a sunset over mountains" --name "Sunset" --database "Images" --engine dalle3 -t ai-generated
 ```
+
+> **Note:** All `create` commands support the `-t, --tag` option for adding tags at creation time.
 
 ### Import & Index
 

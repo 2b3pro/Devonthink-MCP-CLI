@@ -253,11 +253,11 @@ ${jxaResolveGroup('destination', destRef, destIsUuid, 'db', true)}
   ${comment ? `record.comment = "${comment}";` : ''}
 
   // Transcribe the imported record
-  const transcribeOptions = { record: record };
+  const transcribeOptions = {};
   ${language ? `transcribeOptions.language = "${language}";` : ''}
-  ${timestamps ? `transcribeOptions.timestamps = true;` : ''}
+  ${timestamps ? `transcribeOptions.timestamps = true;` : `transcribeOptions.timestamps = false;`}
 
-  const transcription = app.transcribe(transcribeOptions);
+  const transcription = app.transcribeRecord(record, transcribeOptions);
 
   if (!transcription) {
     JSON.stringify({

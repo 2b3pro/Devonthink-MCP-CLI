@@ -26,8 +26,9 @@ import { registerUpdateCommand } from './commands/update.js';
 import { registerExportCommand } from './commands/export.js';
 import { registerIndexCommand } from './commands/index.js';
 import { registerMergeCommand } from './commands/merge.js';
+import { registerTranscribeCommand } from './commands/transcribe.js';
 
-const VERSION = '1.0.0';
+const VERSION = '1.2.0';
 
 export function createProgram() {
   const program = new Command();
@@ -64,6 +65,7 @@ export function createProgram() {
   registerExportCommand(program);
   registerIndexCommand(program);
   registerMergeCommand(program);
+  registerTranscribeCommand(program);
 
   // Add completion command
   program
@@ -82,7 +84,7 @@ export function createProgram() {
 function generateCompletion(shell) {
   const commands = [
     'search', 'get', 'list', 'create', 'import', 'index', 'export', 'modify', 'update', 'delete',
-    'replicate', 'duplicate', 'move', 'merge', 'classify', 'group', 'reveal', 'batch', 'status', 'download', 'reading-list', 'convert', 'deconsolidate', 'completion'
+    'replicate', 'duplicate', 'move', 'merge', 'classify', 'group', 'reveal', 'batch', 'status', 'download', 'reading-list', 'convert', 'deconsolidate', 'transcribe', 'completion'
   ];
 
   const subcommands = {
