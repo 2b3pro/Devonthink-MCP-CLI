@@ -1,5 +1,7 @@
 # DEVONthink CLI (dt)
 
+![devonthink-cli header](devonthink-cli-header.png)
+
 A unified command-line interface for DEVONthink 4 on macOS.
 
 ## Requirements
