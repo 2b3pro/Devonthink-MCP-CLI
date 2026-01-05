@@ -2,7 +2,7 @@
 // Create a new DEVONthink record
 // Usage: osascript -l JavaScript createRecord.js '<json>'
 // JSON format: {"name":"Title","type":"markdown","database":"Inbox","groupPath":"/","content":"...","url":"...","tags":["tag1"]}
-// Required: name, type, database (name or UUID)
+// Required: name, type, database (name or UUID) - database optional if groupPath is a UUID
 // Optional: groupPath (path or UUID, default "/"), content, url (for bookmarks), tags
 // Types: markdown, txt, rtf, bookmark, html, group
 //
@@ -78,15 +78,28 @@ if (!jsonArg) {
 
     if (!name) throw new Error("Missing required field: name");
     if (!type) throw new Error("Missing required field: type");
-    if (!databaseRef) throw new Error("Missing required field: database");
 
     const app = Application("DEVONthink");
 
-    // Find database (by name or UUID)
-    const db = getDatabase(app, databaseRef);
+    // Resolve destination group and database
+    let db;
+    let destination;
 
-    // Find destination group (by path or UUID)
-    const destination = resolveGroup(app, groupPath || "/", db);
+    if (groupPath && isUuid(groupPath)) {
+      // Group UUID provided - get database from the group itself
+      destination = app.getRecordWithUuid(groupPath);
+      if (!destination) throw new Error("Group not found with UUID: " + groupPath);
+      const groupType = destination.recordType();
+      if (groupType !== "group" && groupType !== "smart group") {
+        throw new Error("UUID does not point to a group: " + groupType);
+      }
+      db = destination.database();
+    } else {
+      // Need database for path resolution
+      if (!databaseRef) throw new Error("Missing required field: database (required when groupPath is not a UUID)");
+      db = getDatabase(app, databaseRef);
+      destination = resolveGroup(app, groupPath || "/", db);
+    }
 
     // Create record properties
     const createProps = {

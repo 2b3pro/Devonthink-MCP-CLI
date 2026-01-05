@@ -2,7 +2,7 @@
 // Index a file or folder in DEVONthink (creates reference, not copy)
 // Usage: osascript -l JavaScript indexPath.js '<json>'
 // JSON format: {"path":"...","database":"...","groupPath":"/"}
-// Required: path, database
+// Required: path, database (database optional if groupPath is a UUID)
 // Optional: groupPath (default: "/")
 //
 // Notes:
@@ -21,6 +21,12 @@ function getArg(index, defaultValue) {
   if (args.count <= index) return defaultValue;
   const arg = ObjC.unwrap(args.objectAtIndex(index));
   return arg && arg.length > 0 ? arg : defaultValue;
+}
+
+// Detect if string looks like a UUID
+function isUuid(str) {
+  if (!str || typeof str !== "string" || str.includes("/")) return false;
+  return /^[A-F0-9-]{8,}$/i.test(str) && str.includes("-");
 }
 
 // Helper to find database by name or UUID
@@ -91,7 +97,6 @@ if (!jsonArg) {
     const { path, database, groupPath } = params;
 
     if (!path) throw new Error("Missing required field: path");
-    if (!database) throw new Error("Missing required field: database");
 
     const app = Application("DEVONthink");
 
@@ -104,12 +109,26 @@ if (!jsonArg) {
       throw new Error("Path not found: " + expandedPath);
     }
 
-    // Find database
-    const db = getDatabase(app, database);
-    if (!db) throw new Error("Database not found: " + database);
+    // Find database and destination group
+    let db;
+    let destination;
 
-    // Find destination group
-    const destination = resolveGroup(app, db, groupPath || "/", true);
+    if (groupPath && isUuid(groupPath)) {
+      // Group UUID provided - get database from the group itself
+      destination = app.getRecordWithUuid(groupPath);
+      if (!destination) throw new Error("Group not found with UUID: " + groupPath);
+      const groupType = destination.recordType();
+      if (groupType !== "group" && groupType !== "smart group") {
+        throw new Error("UUID does not point to a group: " + groupType);
+      }
+      db = destination.database();
+    } else {
+      // Need database for path resolution
+      if (!database) throw new Error("Missing required field: database (required when groupPath is not a UUID)");
+      db = getDatabase(app, database);
+      if (!db) throw new Error("Database not found: " + database);
+      destination = resolveGroup(app, db, groupPath || "/", true);
+    }
 
     // Build index options
     const indexOptions = { to: destination };

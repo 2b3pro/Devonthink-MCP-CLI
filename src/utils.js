@@ -123,3 +123,39 @@ export function jxaResolveGroup(varName, ref, refIsUuid, dbVarName = 'db', creat
   }`;
   }
 }
+
+/**
+ * Generate JXA code to resolve database and group together
+ * When groupRef is a UUID, derives database from the group
+ * @param {string} dbVarName - Variable name for the database in JXA
+ * @param {string} groupVarName - Variable name for the group in JXA
+ * @param {string} dbRef - The database reference (name or UUID) - optional if groupRef is UUID
+ * @param {string} groupRef - The group reference (path or UUID)
+ * @param {boolean} createIfMissing - Whether to create missing path components
+ * @returns {string} - JXA code snippet
+ */
+export function jxaResolveDatabaseAndGroup(dbVarName, groupVarName, dbRef, groupRef, createIfMissing = true) {
+  const groupIsUuid = isUuid(groupRef);
+
+  if (groupIsUuid) {
+    // Group UUID provided - derive database from group
+    const uuid = escapeString(extractUuid(groupRef));
+    return `
+  // Find group by UUID and derive database
+  const ${groupVarName} = app.getRecordWithUuid("${uuid}");
+  if (!${groupVarName}) throw new Error("Group not found with UUID: ${uuid}");
+  const ${groupVarName}Type = ${groupVarName}.recordType();
+  if (${groupVarName}Type !== "group" && ${groupVarName}Type !== "smart group") {
+    throw new Error("UUID does not point to a group, got: " + ${groupVarName}Type);
+  }
+  const ${dbVarName} = ${groupVarName}.database();`;
+  } else {
+    // Need database for path resolution
+    if (!dbRef) {
+      throw new Error("Database required when group is specified by path");
+    }
+    const dbIsUuid = isUuid(dbRef);
+    return jxaResolveDatabase(dbVarName, dbRef, dbIsUuid) +
+           jxaResolveGroup(groupVarName, groupRef, false, dbVarName, createIfMissing);
+  }
+}

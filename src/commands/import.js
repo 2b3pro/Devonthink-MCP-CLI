@@ -11,7 +11,7 @@ import { resolve, basename } from 'node:path';
 import { existsSync } from 'node:fs';
 import { runJxa, requireDevonthink } from '../jxa-runner.js';
 import { print, printError } from '../output.js';
-import { isUuid, escapeString, jxaResolveDatabase, jxaResolveGroup } from '../utils.js';
+import { isUuid, escapeString, jxaResolveDatabaseAndGroup } from '../utils.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -19,7 +19,7 @@ export function registerImportCommand(program) {
   program
     .command('import <file>')
     .description('Import a file into DEVONthink')
-    .requiredOption('-d, --database <nameOrUuid>', 'Target database (name or UUID)')
+    .option('-d, --database <nameOrUuid>', 'Target database (required unless -g is a UUID)')
     .option('-g, --to <pathOrUuid>', 'Destination group (path or UUID)', '/')
     .option('-n, --as <name>', 'Custom name for imported record')
     .option('-t, --tag <tag>', 'Add tag (can be used multiple times)', collectTags, [])
@@ -41,6 +41,12 @@ export function registerImportCommand(program) {
         const filePath = resolve(file);
         if (!existsSync(filePath)) {
           throw new Error(`File not found: ${filePath}`);
+        }
+
+        // Validate: database required unless group is a UUID
+        const destRef = options.to || '/';
+        if (!options.database && !isUuid(destRef)) {
+          throw new Error('Database (-d) is required unless destination group (-g) is a UUID');
         }
 
         // Build JXA script for import (with OCR, transcribe, or standard)
@@ -84,8 +90,6 @@ function collectTags(value, previous) {
 function buildImportScript(filePath, options) {
   const dbRef = options.database;
   const destRef = options.to || '/';
-  const dbIsUuid = isUuid(dbRef);
-  const destIsUuid = isUuid(destRef);
   const customName = options.as ? escapeString(options.as) : null;
   const tags = options.tag || [];
   const comment = options.comment ? escapeString(options.comment) : null;
@@ -95,8 +99,7 @@ ObjC.import("Foundation");
 
 try {
   const app = Application("DEVONthink");
-${jxaResolveDatabase('db', dbRef, dbIsUuid)}
-${jxaResolveGroup('destination', destRef, destIsUuid, 'db', true)}
+${jxaResolveDatabaseAndGroup('db', 'destination', dbRef, destRef, true)}
 
   // Import the file (AppleScript 'import path' -> JXA 'importPath')
   const importResult = app.importPath("${escapeString(filePath)}", { to: destination });
@@ -134,8 +137,6 @@ ${jxaResolveGroup('destination', destRef, destIsUuid, 'db', true)}
 function buildOcrImportScript(filePath, options) {
   const dbRef = options.database;
   const destRef = options.to || '/';
-  const dbIsUuid = isUuid(dbRef);
-  const destIsUuid = isUuid(destRef);
   const customName = options.as ? escapeString(options.as) : null;
   const tags = options.tag || [];
   const comment = options.comment ? escapeString(options.comment) : null;
@@ -162,8 +163,7 @@ ObjC.import("Foundation");
 
 try {
   const app = Application("DEVONthink");
-${jxaResolveDatabase('db', dbRef, dbIsUuid)}
-${jxaResolveGroup('destination', destRef, destIsUuid, 'db', true)}
+${jxaResolveDatabaseAndGroup('db', 'destination', dbRef, destRef, true)}
 
   // Build OCR options
   const ocrOptions = {
@@ -219,8 +219,6 @@ ${jxaResolveGroup('destination', destRef, destIsUuid, 'db', true)}
 function buildTranscribeImportScript(filePath, options) {
   const dbRef = options.database;
   const destRef = options.to || '/';
-  const dbIsUuid = isUuid(dbRef);
-  const destIsUuid = isUuid(destRef);
   const customName = options.as ? escapeString(options.as) : null;
   const tags = options.tag || [];
   const comment = options.comment ? escapeString(options.comment) : null;
@@ -232,8 +230,7 @@ ObjC.import("Foundation");
 
 try {
   const app = Application("DEVONthink");
-${jxaResolveDatabase('db', dbRef, dbIsUuid)}
-${jxaResolveGroup('destination', destRef, destIsUuid, 'db', true)}
+${jxaResolveDatabaseAndGroup('db', 'destination', dbRef, destRef, true)}
 
   // Import the file first (AppleScript 'import path' -> JXA 'importPath')
   const importResult = app.importPath("${escapeString(filePath)}", { to: destination });

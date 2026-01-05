@@ -2,7 +2,7 @@
 // Generate AI image and create a record in DEVONthink
 // Usage: osascript -l JavaScript createAiImage.js '<json>'
 // JSON format: {"prompt":"...","name":"...","database":"...","groupPath":"/",...}
-// Required: prompt, name, database
+// Required: prompt, name, database (database optional if groupPath is a UUID)
 // Optional: groupPath, engine, size, style, quality, seed, imageUrl, imagePath, promptStrength
 //
 // Engines: DallE3, GPTImage1, FluxSchnell, FluxPro, FluxProUltra, StableDiffusion, Recraft3, Imagen
@@ -33,6 +33,12 @@ function getArg(index, defaultValue) {
   if (args.count <= index) return defaultValue;
   const arg = ObjC.unwrap(args.objectAtIndex(index));
   return arg && arg.length > 0 ? arg : defaultValue;
+}
+
+// Detect if string looks like a UUID
+function isUuid(str) {
+  if (!str || typeof str !== "string" || str.includes("/")) return false;
+  return /^[A-F0-9-]{8,}$/i.test(str) && str.includes("-");
 }
 
 // Helper to find database by name or UUID
@@ -104,7 +110,6 @@ if (!jsonArg) {
 
     if (!prompt) throw new Error("Missing required field: prompt");
     if (!name) throw new Error("Missing required field: name");
-    if (!database) throw new Error("Missing required field: database");
 
     const app = Application("DEVONthink");
 
@@ -183,10 +188,25 @@ if (!jsonArg) {
     }
 
     // Find database and destination group
-    const db = getDatabase(app, database);
-    if (!db) throw new Error("Database not found: " + database);
+    let db;
+    let destination;
 
-    const destination = resolveGroup(app, db, groupPath || "/", true);
+    if (groupPath && isUuid(groupPath)) {
+      // Group UUID provided - get database from the group itself
+      destination = app.getRecordWithUuid(groupPath);
+      if (!destination) throw new Error("Group not found with UUID: " + groupPath);
+      const groupType = destination.recordType();
+      if (groupType !== "group" && groupType !== "smart group") {
+        throw new Error("UUID does not point to a group: " + groupType);
+      }
+      db = destination.database();
+    } else {
+      // Need database for path resolution
+      if (!database) throw new Error("Missing required field: database (required when groupPath is not a UUID)");
+      db = getDatabase(app, database);
+      if (!db) throw new Error("Database not found: " + database);
+      destination = resolveGroup(app, db, groupPath || "/", true);
+    }
 
     // Create the record with the image
     const record = app.createRecordWith({

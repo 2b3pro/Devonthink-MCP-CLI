@@ -30,6 +30,15 @@ function isUuid(str) {
   return /^[A-F0-9-]{8,}$/i.test(str) && str.includes("-");
 }
 
+// Extract UUID from x-devonthink-item:// URL or return raw UUID
+function extractUuid(str) {
+  if (!str) return null;
+  const urlMatch = str.match(/^x-devonthink-item:\/\/([A-F0-9-]+)$/i);
+  if (urlMatch) return urlMatch[1];
+  if (isUuid(str)) return str;
+  return str; // Return as-is, let DEVONthink handle validation
+}
+
 // Resolve database by name or UUID
 function getDatabase(theApp, ref) {
   if (!ref) return theApp.currentDatabase();
@@ -78,17 +87,18 @@ if (!jsonArg) {
 } else {
   try {
     const params = JSON.parse(jsonArg);
-    const { uuid, language, timestamps, aiCleanup, aiPrompt, includeRaw, save, database, groupPath, docName, tags } = params;
+    const { uuid: rawUuid, language, timestamps, aiCleanup, aiPrompt, includeRaw, save, database, groupPath, docName, tags } = params;
 
-    if (!uuid) throw new Error("Missing required field: uuid");
+    if (!rawUuid) throw new Error("Missing required field: uuid");
 
+    const uuid = extractUuid(rawUuid);
     const app = Application("DEVONthink");
     const record = app.getRecordWithUuid(uuid);
 
     if (!record) throw new Error("Record not found: " + uuid);
 
-    // Build transcription options
-    const transcribeOptions = {};
+    // Build transcription options - 'record' is a named parameter, not part of method name
+    const transcribeOptions = { record: record };
 
     if (language && language.length > 0) {
       transcribeOptions.language = language;
@@ -102,7 +112,7 @@ if (!jsonArg) {
     }
 
     // Perform transcription: transcribe record <record> [language "xx"] [with/without timestamps]
-    const transcription = app.transcribeRecord(record, transcribeOptions);
+    const transcription = app.transcribe(transcribeOptions);
 
     if (!transcription) {
       JSON.stringify({
@@ -120,8 +130,9 @@ if (!jsonArg) {
         const prompt = aiPrompt || "Clean up this transcription. Fix grammar, punctuation, and formatting while preserving the original meaning. Remove filler words and false starts.";
         const fullPrompt = prompt + "\n\n" + transcription;
 
-        // Use DEVONthink's AI chat: get chat response for message <prompt> record <record>
-        aiResponse = app.getChatResponseForMessage(fullPrompt, { record: record });
+        // Use DEVONthink's AI chat: get chat response for <message> [record <record>]
+        // In JXA, "for" is the direct parameter, additional params are named
+        aiResponse = app.getChatResponseFor(fullPrompt, { record: record });
 
         if (aiResponse && aiResponse.length > 0) {
           finalTranscription = aiResponse;
@@ -155,10 +166,11 @@ if (!jsonArg) {
 
         // Determine destination group and database
         if (groupPath) {
-          if (isUuid(groupPath)) {
+          const groupUuid = extractUuid(groupPath);
+          if (isUuid(groupUuid)) {
             // Group UUID provided - get database from the group itself
-            targetGroup = app.getRecordWithUuid(groupPath);
-            if (!targetGroup) throw new Error("Group not found with UUID: " + groupPath);
+            targetGroup = app.getRecordWithUuid(groupUuid);
+            if (!targetGroup) throw new Error("Group not found with UUID: " + groupUuid);
             const groupType = targetGroup.recordType();
             if (groupType !== "group" && groupType !== "smart group") {
               throw new Error("UUID does not point to a group: " + groupType);

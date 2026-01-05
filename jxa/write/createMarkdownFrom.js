@@ -96,7 +96,17 @@ if (!jsonArg) {
     }
 
     // Set destination if specified
-    if (databaseRef && databaseRef.length > 0) {
+    if (groupPath && isUuid(groupPath)) {
+      // Group UUID provided - resolve directly
+      const destination = app.getRecordWithUuid(groupPath);
+      if (!destination) throw new Error("Group not found with UUID: " + groupPath);
+      const groupType = destination.recordType();
+      if (groupType !== "group" && groupType !== "smart group") {
+        throw new Error("UUID does not point to a group: " + groupType);
+      }
+      options.in = destination;
+    } else if (databaseRef && databaseRef.length > 0) {
+      // Database + optional path
       const db = getDatabase(app, databaseRef);
       const destination = resolveGroup(app, groupPath || "/", db);
       options.in = destination;
