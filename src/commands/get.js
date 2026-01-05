@@ -120,6 +120,59 @@ export function registerGetCommand(program) {
       }
     });
 
+  // dt get metadata <uuid> <field>
+  get
+    .command('metadata <uuid> <field>')
+    .description('Get a specific custom metadata field value')
+    .option('--json', 'Output raw JSON')
+    .option('--pretty', 'Pretty print JSON output')
+    .option('-q, --quiet', 'Only output the value')
+    .action(async (uuid, field, options) => {
+      try {
+        await requireDevonthink();
+        const params = { uuid, field };
+        const result = await runJxa('read', 'getCustomMetadata', [JSON.stringify(params)]);
+
+        if (options.quiet && result.success) {
+          console.log(result.value ?? '');
+        } else {
+          print(result, options);
+        }
+
+        if (!result.success) process.exit(1);
+      } catch (error) {
+        printError(error, options);
+        process.exit(1);
+      }
+    });
+
+  // dt get metadata-list <uuid>
+  get
+    .command('metadata-list <uuid>')
+    .alias('metadata-all')
+    .description('List all custom metadata fields for a record')
+    .option('--json', 'Output raw JSON')
+    .option('--pretty', 'Pretty print JSON output')
+    .option('-q, --quiet', 'Only output field names (one per line)')
+    .action(async (uuid, options) => {
+      try {
+        await requireDevonthink();
+        const params = { uuid, all: true };
+        const result = await runJxa('read', 'getCustomMetadata', [JSON.stringify(params)]);
+
+        if (options.quiet && result.success) {
+          console.log(result.metadata.map(m => m.field).join('\n'));
+        } else {
+          print(result, options);
+        }
+
+        if (!result.success) process.exit(1);
+      } catch (error) {
+        printError(error, options);
+        process.exit(1);
+      }
+    });
+
   // dt get transcribe <uuid>
   get
     .command('transcribe <uuid>')

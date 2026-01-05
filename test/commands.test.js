@@ -12,6 +12,7 @@ import {
   createTestGroup,
   deleteTestRecord,
   getRecordProps,
+  getCustomMetadata,
   recordExists,
   cleanupTestRecords,
   uniqueName,
@@ -104,6 +105,89 @@ describe('DevonThink CLI Commands', () => {
         const result = await runCommand(['get', 'concordance', testRecordUuid, '-l', '5']);
         assert.strictEqual(result.success, true);
         assert.ok(result.words.length <= 5);
+      });
+    });
+
+    describe('get metadata', () => {
+      let metadataRecordUuid;
+
+      before(async () => {
+        // Create a record and set custom metadata on it
+        metadataRecordUuid = await createTestRecord({
+          name: uniqueName('MetadataGetTest'),
+          content: 'Test content for metadata get'
+        });
+        createdRecords.push(metadataRecordUuid);
+
+        // Set some custom metadata using the update command
+        await runCommand([
+          'update', metadataRecordUuid,
+          '--custom-metadata', 'testfield',
+          '-c', 'testvalue'
+        ]);
+      });
+
+      it('should get a specific custom metadata field', async () => {
+        const result = await runCommand(['get', 'metadata', metadataRecordUuid, 'testfield']);
+        assert.strictEqual(result.success, true);
+        assert.strictEqual(result.field, 'testfield');
+        assert.strictEqual(result.value, 'testvalue');
+      });
+
+      it('should return null for non-existent field', async () => {
+        const result = await runCommand(['get', 'metadata', metadataRecordUuid, 'nonexistent']);
+        assert.strictEqual(result.success, true);
+        assert.strictEqual(result.value, null);
+      });
+    });
+
+    describe('get metadata-list', () => {
+      let metadataListRecordUuid;
+
+      before(async () => {
+        metadataListRecordUuid = await createTestRecord({
+          name: uniqueName('MetadataListTest'),
+          content: 'Test content for metadata list'
+        });
+        createdRecords.push(metadataListRecordUuid);
+
+        // Set multiple custom metadata fields
+        await runCommand([
+          'update', metadataListRecordUuid,
+          '--custom-metadata', 'author',
+          '-c', 'John Doe'
+        ]);
+        await runCommand([
+          'update', metadataListRecordUuid,
+          '--custom-metadata', 'project',
+          '-c', 'Test Project'
+        ]);
+      });
+
+      it('should list all custom metadata fields', async () => {
+        const result = await runCommand(['get', 'metadata-list', metadataListRecordUuid]);
+        assert.strictEqual(result.success, true);
+        assert.ok(Array.isArray(result.metadata));
+        assert.ok(result.count >= 2);
+
+        // DEVONthink internally prefixes custom metadata keys with "md"
+        const fields = result.metadata.map(m => m.field);
+        assert.ok(fields.includes('mdauthor'));
+        assert.ok(fields.includes('mdproject'));
+      });
+
+      it('should return empty array for record without metadata', async () => {
+        // Create a fresh record with no metadata
+        const freshUuid = await createTestRecord({
+          name: uniqueName('NoMetadataTest'),
+          content: 'No metadata here'
+        });
+        createdRecords.push(freshUuid);
+
+        const result = await runCommand(['get', 'metadata-list', freshUuid]);
+        assert.strictEqual(result.success, true);
+        assert.strictEqual(result.count, 0);
+        assert.deepStrictEqual(result.metadata, []);
       });
     });
   });
@@ -382,6 +466,110 @@ describe('DevonThink CLI Commands', () => {
         '-c', 'Content'
       ], { expectFailure: true });
       assert.strictEqual(result.success, false);
+    });
+
+    it('should default to setting mode when not specified', async () => {
+      const result = await runCommand([
+        'update', updateTestUuid,
+        '-c', 'Default mode content'
+      ]);
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.mode, 'setting');
+    });
+
+    describe('--comments flag', () => {
+      let commentTestUuid;
+
+      before(async () => {
+        commentTestUuid = await createTestRecord({
+          name: uniqueName('CommentTest'),
+          content: 'Content for comment testing'
+        });
+        createdRecords.push(commentTestUuid);
+      });
+
+      it('should set comment with setting mode', async () => {
+        const commentText = 'Test comment content';
+        const result = await runCommand([
+          'update', commentTestUuid,
+          '--comments',
+          '-c', commentText
+        ]);
+        assert.strictEqual(result.success, true);
+        assert.strictEqual(result.target, 'comment');
+
+        // Verify comment was set
+        const props = await getRecordProps(commentTestUuid);
+        assert.strictEqual(props.comment, commentText);
+      });
+
+      it('should append to comment with appending mode', async () => {
+        const appendText = ' - appended';
+        const result = await runCommand([
+          'update', commentTestUuid,
+          '--comments',
+          '-m', 'appending',
+          '-c', appendText
+        ]);
+        assert.strictEqual(result.success, true);
+
+        const props = await getRecordProps(commentTestUuid);
+        assert.ok(props.comment.endsWith(appendText));
+      });
+    });
+
+    describe('--custom-metadata flag', () => {
+      let metadataTestUuid;
+
+      before(async () => {
+        metadataTestUuid = await createTestRecord({
+          name: uniqueName('MetadataTest'),
+          content: 'Content for metadata testing'
+        });
+        createdRecords.push(metadataTestUuid);
+      });
+
+      it('should set custom metadata field', async () => {
+        const authorValue = 'Test Author';
+        const result = await runCommand([
+          'update', metadataTestUuid,
+          '--custom-metadata', 'author',
+          '-c', authorValue
+        ]);
+        assert.strictEqual(result.success, true);
+        assert.strictEqual(result.target, 'customMetadata');
+        assert.strictEqual(result.field, 'author');
+
+        // Verify metadata was set
+        const value = await getCustomMetadata(metadataTestUuid, 'author');
+        assert.strictEqual(value, authorValue);
+      });
+
+      it('should update existing custom metadata field', async () => {
+        const newAuthor = 'Updated Author';
+        const result = await runCommand([
+          'update', metadataTestUuid,
+          '--custom-metadata', 'author',
+          '-c', newAuthor
+        ]);
+        assert.strictEqual(result.success, true);
+
+        const value = await getCustomMetadata(metadataTestUuid, 'author');
+        assert.strictEqual(value, newAuthor);
+      });
+    });
+
+    describe('mutually exclusive flags', () => {
+      it('should fail when --comments and --custom-metadata used together', async () => {
+        const result = await runCommand([
+          'update', updateTestUuid,
+          '--comments',
+          '--custom-metadata', 'field',
+          '-c', 'Content'
+        ], { expectFailure: true });
+        assert.strictEqual(result.success, false);
+        assert.ok(result.error.includes('Cannot use'));
+      });
     });
   });
 

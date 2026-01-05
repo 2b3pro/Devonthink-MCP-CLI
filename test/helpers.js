@@ -261,6 +261,8 @@ export async function getRecordProps(uuid) {
       const app = Application("DEVONthink");
       const record = app.getRecordWithUuid("${uuid}");
       if (!record) throw new Error("Record not found");
+      let annotation = "";
+      try { annotation = record.annotation() || ""; } catch {}
       JSON.stringify({
         success: true,
         uuid: record.uuid(),
@@ -268,6 +270,7 @@ export async function getRecordProps(uuid) {
         type: record.type(),
         tags: record.tags(),
         comment: record.comment(),
+        annotation: annotation,
         location: record.location()
       });
     } catch (e) {
@@ -276,6 +279,30 @@ export async function getRecordProps(uuid) {
   `;
 
   return await runJxaScript(script);
+}
+
+/**
+ * Get custom metadata for a record
+ * @param {string} uuid - Record UUID
+ * @param {string} field - Custom metadata field name
+ * @returns {Promise<any>} Custom metadata value
+ */
+export async function getCustomMetadata(uuid, field) {
+  const script = `
+    ObjC.import("Foundation");
+    try {
+      const app = Application("DEVONthink");
+      const record = app.getRecordWithUuid("${uuid}");
+      if (!record) throw new Error("Record not found");
+      const value = app.getCustomMetaData({ for: "${field}", from: record });
+      JSON.stringify({ success: true, value: value });
+    } catch (e) {
+      JSON.stringify({ success: false, error: e.message });
+    }
+  `;
+
+  const result = await runJxaScript(script);
+  return result.value;
 }
 
 /**

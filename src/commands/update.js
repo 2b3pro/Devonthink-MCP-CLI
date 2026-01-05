@@ -13,11 +13,13 @@ import { readStdin, isStdinMarker } from '../utils.js';
 export function registerUpdateCommand(program) {
   program
     .command('update <uuid>')
-    .description('Update text content of a record (plain/rich text, Markdown, HTML)')
-    .requiredOption('-m, --mode <mode>', 'Update mode: setting (replace), inserting (after metadata), appending')
+    .description('Update text content, annotation, comment, or custom metadata of a record')
+    .option('-m, --mode <mode>', 'Update mode: setting (replace), inserting (after first line), appending (default: setting)')
     .option('-c, --content <text>', 'Text content to update (use - for stdin)')
     .option('-f, --file <path>', 'Read content from file')
     .option('-u, --url <url>', 'URL associated with the text')
+    .option('--comments', 'Update the comment property instead of content')
+    .option('--custom-metadata <field>', 'Update a custom metadata field instead of content')
     .option('--json', 'Output raw JSON')
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Minimal output')
@@ -25,9 +27,17 @@ export function registerUpdateCommand(program) {
       try {
         await requireDevonthink();
 
+        // Default mode to 'setting' if not specified
+        const mode = options.mode || 'setting';
         const validModes = ['setting', 'inserting', 'appending'];
-        if (!validModes.includes(options.mode)) {
-          throw new Error(`Invalid mode: ${options.mode}. Valid: setting, inserting, appending`);
+        if (!validModes.includes(mode)) {
+          throw new Error(`Invalid mode: ${mode}. Valid: setting, inserting, appending`);
+        }
+
+        // Check for mutually exclusive target options
+        const targets = [options.comments, options.customMetadata].filter(Boolean);
+        if (targets.length > 1) {
+          throw new Error('Cannot use --comments and --custom-metadata together');
         }
 
         let text;
@@ -53,11 +63,21 @@ export function registerUpdateCommand(program) {
         const params = {
           uuid,
           text,
-          mode: options.mode
+          mode
         };
 
         if (options.url) {
           params.url = options.url;
+        }
+
+        // Set target type
+        if (options.comments) {
+          params.target = 'comment';
+        } else if (options.customMetadata) {
+          params.target = 'customMetadata';
+          params.customMetadataField = options.customMetadata;
+        } else {
+          params.target = 'content';
         }
 
         const result = await runJxa('write', 'updateRecord', [JSON.stringify(params)]);

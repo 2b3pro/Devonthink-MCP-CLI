@@ -89,6 +89,12 @@ dt get selection
 
 # Get word concordance (word frequency list)
 dt get concordance <uuid>
+
+# Get a specific custom metadata field
+dt get metadata <uuid> <field>
+
+# List all custom metadata fields for a record
+dt get metadata-list <uuid>
 ```
 
 ### Transcribe
@@ -245,7 +251,19 @@ dt update <uuid> --content "New content here"
 dt update <uuid> --file ./updated-content.md
 
 # Append to existing content
-dt update <uuid> --content "Additional text" --append
+dt update <uuid> --content "Additional text" --mode appending
+
+# Insert after first line
+dt update <uuid> --content "Inserted text" --mode inserting
+
+# Update the comment property
+dt update <uuid> --content "Comment text" --comments
+
+# Update a custom metadata field
+dt update <uuid> --content "John Doe" --custom-metadata author
+
+# Update via stdin
+echo "Content from pipe" | dt update <uuid> -c -
 ```
 
 ### Move, Duplicate, Replicate
@@ -481,15 +499,15 @@ npm test -- --test-reporter=spec
 
 ### Test Database
 
-Tests require a DEVONthink database named "Test_Database" to be open. The test suite includes 56 tests covering all major commands:
+Tests require a DEVONthink database named "Test_Database" to be open. The test suite includes 66 tests covering all major commands:
 
 - Status checks
-- Get operations (props, preview, selection, concordance)
+- Get operations (props, preview, selection, concordance, metadata)
 - List operations (group, inbox, tag)
 - Search operations (query, file, path, tags, url, comment)
 - Create operations (record, markdown, group, bookmark)
 - Modify operations (name, tags, comment, metadata)
-- Update operations (content replacement and append)
+- Update operations (content, comments, custom metadata)
 - Group management
 - Move, duplicate, replicate operations
 - Delete operations
