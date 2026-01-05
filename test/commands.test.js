@@ -997,6 +997,101 @@ describe('DevonThink CLI Commands', () => {
   });
 
   // ============================================================
+  // CHAT COMMANDS
+  // ============================================================
+  describe('chat commands', () => {
+    describe('chat models', () => {
+      it('should list models for default engine', async () => {
+        const result = await runCommand(['chat', 'models']);
+        assert.strictEqual(result.success, true);
+        assert.ok(result.engine);
+        assert.ok(Array.isArray(result.models));
+        assert.ok(typeof result.count === 'number');
+      });
+
+      it('should list models for specific engine', async () => {
+        const result = await runCommand(['chat', 'models', '-e', 'gemini']);
+        assert.strictEqual(result.success, true);
+        assert.strictEqual(result.engine, 'Gemini');
+        assert.ok(Array.isArray(result.models));
+      });
+
+      it('should fail for invalid engine', async () => {
+        const result = await runCommand(['chat', 'models', '-e', 'invalid_engine'], { expectFailure: true });
+        assert.strictEqual(result.success, false);
+        assert.ok(result.error.includes('Unknown engine'));
+      });
+    });
+
+    describe('chat capabilities', () => {
+      it('should get capabilities for a model', async () => {
+        const result = await runCommand(['chat', 'capabilities', '-e', 'gemini', '-m', 'gemini-flash']);
+        assert.strictEqual(result.success, true);
+        assert.strictEqual(result.engine, 'Gemini');
+        assert.strictEqual(result.model, 'gemini-flash');
+        assert.ok(typeof result.contextWindow === 'number');
+        assert.ok(typeof result.vision === 'boolean');
+        assert.ok(typeof result.thinking === 'boolean');
+        assert.ok(typeof result.toolCalls === 'boolean');
+      });
+    });
+
+    describe('chat ask', () => {
+      // AI calls can take longer - use 90s timeout
+      const AI_TIMEOUT = 90000;
+
+      it('should get a response for a simple prompt', async () => {
+        const result = await runCommand(
+          ['chat', 'ask', 'Say hello'],
+          { timeout: AI_TIMEOUT }
+        );
+        assert.strictEqual(result.success, true);
+        // Just verify we got a response (AI outputs vary)
+        assert.ok(result.response !== null && result.response !== undefined);
+        assert.ok(result.response.length > 0);
+      });
+
+      it('should accept prompt from stdin', async () => {
+        const result = await runCommandWithStdin(
+          ['chat', 'ask'],
+          'Say goodbye',
+          { timeout: AI_TIMEOUT }
+        );
+        assert.strictEqual(result.success, true);
+        assert.ok(result.response !== null && result.response !== undefined);
+        assert.ok(result.response.length > 0);
+      });
+
+      it('should work with document context', async () => {
+        // Create a test document with unique content
+        const testDoc = await createTestRecord({
+          name: uniqueName('ChatContextTest'),
+          content: 'The secret code is XYZABC789.'
+        });
+        createdRecords.push(testDoc);
+
+        const result = await runCommand(
+          [
+            'chat', 'ask',
+            'What is the secret code mentioned in this document?',
+            '-r', testDoc
+          ],
+          { timeout: AI_TIMEOUT }
+        );
+        assert.strictEqual(result.success, true);
+        assert.ok(result.response !== null && result.response !== undefined);
+        // The response should mention the code (with some tolerance for formatting)
+        assert.ok(result.response.includes('XYZABC789') || result.response.includes('XYZ'));
+      });
+
+      it('should fail without a prompt', async () => {
+        const result = await runCommand(['chat', 'ask'], { expectFailure: true });
+        assert.strictEqual(result.success, false);
+      });
+    });
+  });
+
+  // ============================================================
   // CLEANUP
   // ============================================================
   after(async () => {

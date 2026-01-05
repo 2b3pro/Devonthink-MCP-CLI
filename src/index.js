@@ -27,8 +27,9 @@ import { registerExportCommand } from './commands/export.js';
 import { registerIndexCommand } from './commands/index.js';
 import { registerMergeCommand } from './commands/merge.js';
 import { registerTranscribeCommand } from './commands/transcribe.js';
+import { registerChatCommand } from './commands/chat.js';
 
-const VERSION = '1.5.0';
+const VERSION = '1.6.0';
 
 export function createProgram() {
   const program = new Command();
@@ -66,6 +67,7 @@ export function createProgram() {
   registerIndexCommand(program);
   registerMergeCommand(program);
   registerTranscribeCommand(program);
+  registerChatCommand(program);
 
   // Add completion command
   program
@@ -84,7 +86,7 @@ export function createProgram() {
 function generateCompletion(shell) {
   const commands = [
     'search', 'get', 'list', 'create', 'import', 'index', 'export', 'modify', 'update', 'delete',
-    'replicate', 'duplicate', 'move', 'merge', 'classify', 'group', 'reveal', 'batch', 'status', 'download', 'reading-list', 'convert', 'deconsolidate', 'transcribe', 'completion'
+    'replicate', 'duplicate', 'move', 'merge', 'classify', 'group', 'reveal', 'batch', 'status', 'download', 'reading-list', 'convert', 'deconsolidate', 'transcribe', 'chat', 'completion'
   ];
 
   const subcommands = {
@@ -95,7 +97,8 @@ function generateCompletion(shell) {
     classify: ['suggest', 'batch'],
     batch: ['preview', 'verify'],
     download: ['add', 'url', 'markup', 'json', 'start', 'stop'],
-    'reading-list': ['add']
+    'reading-list': ['add'],
+    chat: ['ask', 'models', 'capabilities']
   };
 
   switch (shell) {
@@ -147,6 +150,10 @@ _dt_completions() {
             COMPREPLY=( $(compgen -W "add" -- \${cur}) )
             return 0
             ;;
+        chat)
+            COMPREPLY=( $(compgen -W "ask models capabilities" -- \${cur}) )
+            return 0
+            ;;
         completion)
             COMPREPLY=( $(compgen -W "bash zsh fish" -- \${cur}) )
             return 0
@@ -194,10 +201,11 @@ _dt() {
         'reading-list:Reading list operations'
         'convert:Convert record to another format'
         'deconsolidate:Move record to external folder'
+        'chat:AI chat with DEVONthink'
         'completion:Generate shell completion script'
     )
 
-    local -a search_commands get_commands list_commands create_commands classify_commands batch_commands reading_list_commands
+    local -a search_commands get_commands list_commands create_commands classify_commands batch_commands reading_list_commands chat_commands
 
     search_commands=(
         'query:Full-text search for records'
@@ -255,6 +263,12 @@ _dt() {
         'add:Add record or URL to reading list'
     )
 
+    chat_commands=(
+        'ask:Send a chat message'
+        'models:List available chat models'
+        'capabilities:Get model capabilities'
+    )
+
     _arguments -C \\
         '1: :->command' \\
         '2: :->subcommand' \\
@@ -289,6 +303,9 @@ _dt() {
                     ;;
                 reading-list|rl)
                     _describe 'subcommand' reading_list_commands
+                    ;;
+                chat)
+                    _describe 'subcommand' chat_commands
                     ;;
             esac
             ;;
@@ -326,6 +343,7 @@ complete -c dt -f -n "__fish_use_subcommand" -a "download" -d "Add URL to downlo
 complete -c dt -f -n "__fish_use_subcommand" -a "reading-list" -d "Reading list operations"
 complete -c dt -f -n "__fish_use_subcommand" -a "convert" -d "Convert record to another format"
 complete -c dt -f -n "__fish_use_subcommand" -a "deconsolidate" -d "Move record to external folder"
+complete -c dt -f -n "__fish_use_subcommand" -a "chat" -d "AI chat with DEVONthink"
 complete -c dt -f -n "__fish_use_subcommand" -a "completion" -d "Generate shell completion"
 
 # search subcommands
@@ -375,6 +393,11 @@ complete -c dt -f -n "__fish_seen_subcommand_from download dl" -a "stop" -d "Sto
 
 # reading-list subcommands
 complete -c dt -f -n "__fish_seen_subcommand_from reading-list rl" -a "add" -d "Add record or URL to reading list"
+
+# chat subcommands
+complete -c dt -f -n "__fish_seen_subcommand_from chat" -a "ask" -d "Send a chat message"
+complete -c dt -f -n "__fish_seen_subcommand_from chat" -a "models" -d "List available chat models"
+complete -c dt -f -n "__fish_seen_subcommand_from chat" -a "capabilities" -d "Get model capabilities"
 
 # completion subcommands
 complete -c dt -f -n "__fish_seen_subcommand_from completion" -a "bash zsh fish"

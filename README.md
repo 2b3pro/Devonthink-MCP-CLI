@@ -313,6 +313,60 @@ dt convert <uuid> --format markdown
 dt convert <uuid> --format rtf
 ```
 
+### AI Chat
+
+```bash
+# Simple prompt
+dt chat "What is the capital of France?"
+
+# With document context
+dt chat "Summarize this document" -r <uuid>
+
+# Multiple documents for context
+dt chat "Compare these documents" -r <uuid1> -r <uuid2>
+
+# With web URL context
+dt chat "Summarize this article" --url https://example.com/article
+
+# Pipeline: search → chat
+dt search query "quarterly reports" -q | dt chat "What are the key trends?" --record -
+
+# Prompt from stdin
+echo "Explain quantum computing" | dt chat
+
+# Specific engine and model
+dt chat "Explain this code" -r <uuid> -e claude -m "claude-3-sonnet"
+
+# JSON response format
+dt chat "List 5 facts about Mars" -f json
+
+# Disable reasoning for speed/cost
+dt chat "Quick summary" -r <uuid> --no-thinking
+
+# List available models
+dt chat models
+dt chat models -e claude
+dt chat models -e ollama -q  # Just model names
+
+# Get model capabilities
+dt chat capabilities -e claude -m "claude-3-opus"
+```
+
+**Engines:** chatgpt, claude, gemini, mistral, perplexity, openrouter, openai-compatible, lmstudio, ollama, remote-ollama
+
+**Options:**
+- `-r, --record <uuid>` - Document(s) for context (repeatable)
+- `-U, --url <url>` - Web page/image/PDF URL for context
+- `-e, --engine <engine>` - Chat engine
+- `-m, --model <model>` - Specific model name
+- `-T, --temperature <0-2>` - Creativity (0=focused, 2=random)
+- `--role <text>` - System role/persona
+- `--mode <mode>` - Content mode: auto, text, vision
+- `-u, --usage <mode>` - Usage mode: cheapest, auto, best
+- `-f, --format <fmt>` - Response format: text, json, html, message, raw
+- `--no-thinking` - Disable reasoning (faster/cheaper)
+- `--no-tools` - Disable tool calls (no search/download)
+
 ### Classification
 
 ```bash
@@ -499,7 +553,7 @@ npm test -- --test-reporter=spec
 
 ### Test Database
 
-Tests require a DEVONthink database named "Test_Database" to be open. The test suite includes 66 tests covering all major commands:
+Tests require a DEVONthink database named "Test_Database" to be open. The test suite includes 74 tests covering all major commands:
 
 - Status checks
 - Get operations (props, preview, selection, concordance, metadata)
@@ -516,6 +570,7 @@ Tests require a DEVONthink database named "Test_Database" to be open. The test s
 - Reveal/open operations
 - Convert operations
 - Import operations
+- AI chat operations (chat, models, capabilities)
 - Stdin piping support (content and UUID pipelines)
 
 ### Test Helpers
