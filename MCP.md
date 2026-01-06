@@ -67,6 +67,26 @@ Once connected, you can ask Claude natural language questions that require acces
 
 > "Using the 'See Also' connections, find surprising links between my history notes and my economics notes."
 
+> "Summarize the files in my 'To Read' smart group."
+
+> "Check my 'SOPs' smart group for instructions on how to file this receipt."
+
+## Resources
+
+The server exposes DEVONthink "Contexts" as read-only resources that the AI can attach to the conversation. This allows you to give the AI instant access to dynamic collections of files.
+
+| URI Scheme | Description |
+| :--- | :--- |
+| `devonthink://inbox` | The contents of your Global Inbox. |
+| `devonthink://selection` | The currently selected record(s) in the frontmost window. |
+| `devonthink://{DB}/smartgroups` | A list of all root-level Smart Groups in database `{DB}`. |
+| `devonthink://{DB}/smartgroup/{ID}` | The contents of a specific Smart Group (by Name or UUID). |
+
+**How to use Resources:**
+- **Context Injection:** "Refactor this code based on `@devonthink://selection`."
+- **Queue Processing:** "Summarize everything in `@devonthink://Inbox/smartgroup/To_Process`."
+- **Instruction Libraries:** Create a root Smart Group named "SOPs" and ask the AI to "Read my SOPs before starting."
+
 ## Troubleshooting
 
 ### "Server connection failed"
