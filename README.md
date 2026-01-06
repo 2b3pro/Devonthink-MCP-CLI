@@ -44,6 +44,7 @@ This tool includes a **Model Context Protocol (MCP)** server. When added to Clau
 - **Organize:** "Move these 50 PDFs to the correct folders and tag them based on their content."
 
 👉 **[Setup Guide (MCP.md)](MCP.md)** | 👉 **[Batch System Guide (docs/BATCH-QUEUE.md)](docs/BATCH-QUEUE.md)**
+| 👉 **[Search Cheatsheet (docs/SEARCH-CHEATSHEET.md)](docs/SEARCH-CHEATSHEET.md)**
 
 ---
 
@@ -68,6 +69,9 @@ dt status
 
 # Search for records and get clean output
 dt search query "machine learning" --database "Research"
+
+# Time-bound search (first-class flags)
+dt search query "machine learning" --created-after "2 weeks" --modified-before "2024-12-31"
 
 # Get selected records from the GUI
 dt get selection

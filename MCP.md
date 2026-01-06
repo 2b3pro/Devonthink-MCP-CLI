@@ -109,7 +109,7 @@ The server exposes the following tools to the AI:
 
 | Tool | Description |
 | :--- | :--- |
-| `search_records` | Search for records using full-text or metadata. |
+| `search_records` | Search for records using full-text or metadata (supports date filters). |
 | `explore_devonthink` | List databases, current selection, group contents, or reveal items. |
 | `manage_record` | Create, update, move, trash, or convert records. |
 | `get_record_properties` | Fetch detailed metadata for a specific record UUID. |
@@ -122,3 +122,11 @@ The server exposes the following tools to the AI:
 | `get_queue_status` | Check the status of the task queue. |
 | `verify_queue` | Perform a deep existence check of all resources in the queue. |
 | `repair_queue` | Use AI to fix and restructure an invalid or failed queue. |
+
+### search_records params
+
+In addition to `query`, `database`, and `limit`, the tool accepts these optional date filters:
+
+- `createdAfter`, `createdBefore`
+- `modifiedAfter`, `modifiedBefore`
+- `addedAfter`, `addedBefore`

@@ -9,6 +9,7 @@ import { runJxa, requireDevonthink } from '../jxa-runner.js';
 import { print, printError } from '../output.js';
 import { trackDatabaseAccess } from '../state.js';
 import { getDatabaseCache } from '../cache.js';
+import { buildSearchQuery } from '../utils.js';
 
 async function trackDb(nameOrUuid) {
   if (!nameOrUuid) return;
@@ -39,6 +40,12 @@ export function registerSearchCommand(program) {
     .option('-l, --limit <n>', 'Maximum results to return', '50')
     .option('-c, --comparison <mode>', 'Search mode: fuzzy, "no case", "no umlauts", related')
     .option('--exclude-subgroups', 'Do not search in subgroups')
+    .option('--created-after <value>', 'Filter by creation date (after). Example: "2 weeks", "2024-01-01"')
+    .option('--created-before <value>', 'Filter by creation date (before). Example: "2024-12-31"')
+    .option('--modified-after <value>', 'Filter by modification date (after)')
+    .option('--modified-before <value>', 'Filter by modification date (before)')
+    .option('--added-after <value>', 'Filter by addition date (after)')
+    .option('--added-before <value>', 'Filter by addition date (before)')
     .option('--json', 'Output raw JSON')
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUIDs')
@@ -57,7 +64,16 @@ export function registerSearchCommand(program) {
           excludeSubgroups: options.excludeSubgroups || false
         };
 
-        const result = await runJxa('read', 'search', [query, JSON.stringify(opts)]);
+        const combinedQuery = buildSearchQuery(query, {
+          createdAfter: options.createdAfter,
+          createdBefore: options.createdBefore,
+          modifiedAfter: options.modifiedAfter,
+          modifiedBefore: options.modifiedBefore,
+          addedAfter: options.addedAfter,
+          addedBefore: options.addedBefore
+        });
+
+        const result = await runJxa('read', 'search', [combinedQuery, JSON.stringify(opts)]);
         print(result, options);
 
         if (!result.success) {

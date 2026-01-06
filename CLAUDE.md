@@ -232,7 +232,7 @@ The sdef output shows AppleScript syntax. Remember to translate to JXA conventio
 2. Create corresponding JXA script in `jxa/read/` or `jxa/write/`
 3. Import and register in `src/index.js`
 4. Add to shell completions in `src/index.js` if needed
-5. **Write unit tests** in `test/commands.test.js` (required before finalizing)
+5. **Write unit tests** in `test/commands.test.js` (required before finalizing) - Test granularly, unless running all the tests are vital
 6. **Run `npm test`** to verify all tests pass
 
 ### Debugging JXA

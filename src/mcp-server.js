@@ -21,6 +21,7 @@ import {
   getQueueStatus, 
   clearQueue 
 } from "./queue.js";
+import { buildSearchQuery } from "./utils.js";
 
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json');
@@ -149,6 +150,12 @@ Variables like "$1.uuid" can be used to reference results of previous tasks.`,
         query: { type: "string", description: "The search query" },
         database: { type: "string", description: "Optional database name or UUID" },
         limit: { type: "number", description: "Max results (default 20)", default: 20 },
+        createdAfter: { type: "string", description: "Filter by creation date (after)" },
+        createdBefore: { type: "string", description: "Filter by creation date (before)" },
+        modifiedAfter: { type: "string", description: "Filter by modification date (after)" },
+        modifiedBefore: { type: "string", description: "Filter by modification date (before)" },
+        addedAfter: { type: "string", description: "Filter by addition date (after)" },
+        addedBefore: { type: "string", description: "Filter by addition date (before)" },
       },
       required: ["query"],
     },
@@ -492,8 +499,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case "search_records": {
+        const combinedQuery = buildSearchQuery(args.query, {
+          createdAfter: args.createdAfter,
+          createdBefore: args.createdBefore,
+          modifiedAfter: args.modifiedAfter,
+          modifiedBefore: args.modifiedBefore,
+          addedAfter: args.addedAfter,
+          addedBefore: args.addedBefore
+        });
         const result = await runJxa("read", "search", [
-          args.query,
+          combinedQuery,
           JSON.stringify({ database: args.database, limit: args.limit || 20 })
         ]);
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };

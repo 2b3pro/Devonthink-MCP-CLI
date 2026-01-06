@@ -287,6 +287,15 @@ describe('DevonThink CLI Commands', () => {
         const result = await runCommand(['search', 'query', 'test', '-l', '5']);
         assert.strictEqual(result.success, true);
       });
+
+      it('should support time filter flags', async () => {
+        const result = await runCommand([
+          'search', 'query', 'XYZTEST123',
+          '--created-after', '2 weeks',
+          '--modified-before', '2024-12-31'
+        ]);
+        assert.strictEqual(result.success, true);
+      });
     });
 
     describe('search file', () => {

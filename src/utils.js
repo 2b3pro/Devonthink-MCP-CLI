@@ -195,3 +195,39 @@ export function jxaResolveDatabaseAndGroup(dbVarName, groupVarName, dbRef, group
            jxaResolveGroup(groupVarName, groupRef, false, dbVarName, createIfMissing);
   }
 }
+
+/**
+ * Build a DEVONthink search query by appending metadata filters.
+ * @param {string} baseQuery - Original query string.
+ * @param {object} filters - Date filter values.
+ * @returns {string} - Combined search query.
+ */
+export function buildSearchQuery(baseQuery, filters = {}) {
+  const parts = [];
+  const base = (baseQuery || '').trim();
+  const filterParts = [];
+
+  const addFilter = (prefix, operator, value) => {
+    const trimmed = String(value || '').trim();
+    if (!trimmed) return;
+    filterParts.push(`${prefix}:${operator}${trimmed}`);
+  };
+
+  addFilter('created', '>', filters.createdAfter);
+  addFilter('created', '<', filters.createdBefore);
+  addFilter('modified', '>', filters.modifiedAfter);
+  addFilter('modified', '<', filters.modifiedBefore);
+  addFilter('added', '>', filters.addedAfter);
+  addFilter('added', '<', filters.addedBefore);
+
+  if (base) {
+    if (filterParts.length > 0) {
+      const wrapped = base.startsWith('(') && base.endsWith(')') ? base : `(${base})`;
+      parts.push(wrapped);
+    } else {
+      parts.push(base);
+    }
+  }
+
+  return parts.concat(filterParts).join(' AND ');
+}
