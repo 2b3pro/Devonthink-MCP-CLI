@@ -30,8 +30,8 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io) is an open s
    ```json
    {
      "mcpServers": {
-       "devonthink-mcp": {
-         "command": "node",
+       "devonthink": {
+         "command": "/path/to/your/node",
          "args": [
            "/usr/local/bin/dt",
            "mcp",
@@ -87,5 +87,6 @@ The server exposes the following tools to the AI:
 | `get_record_content` | Read the text content of a specific UUID. |
 | `get_related_records` | Get backlinks, outgoing links, and AI similarities. |
 | `list_group_contents` | List records within a specific group UUID. |
+| `create_record` | Create a new markdown, text, or bookmark record. |
 | `organize_record` | Perform OCR, rename, and tag a record intelligently. |
 | `summarize_record` | Generate AI or Native summaries of record content. |

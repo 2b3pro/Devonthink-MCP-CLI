@@ -111,6 +111,28 @@ const TOOLS = [
       },
       required: ["uuid"],
     },
+  },
+  {
+    name: "create_record",
+    description: "Create a new record (markdown, text, bookmark, or group) in DEVONthink.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "The title of the record" },
+        type: { 
+          type: "string", 
+          enum: ["markdown", "txt", "rtf", "bookmark", "html", "group"],
+          description: "Record type",
+          default: "markdown"
+        },
+        content: { type: "string", description: "Content for text-based records" },
+        database: { type: "string", description: "Database name or UUID (default: current/Inbox)" },
+        groupPath: { type: "string", description: "Destination group path (e.g., '/Notes') or UUID" },
+        url: { type: "string", description: "URL for bookmark records" },
+        tags: { type: "array", items: { type: "string" }, description: "Tags to apply" },
+      },
+      required: ["name"],
+    },
   }
 ];
 
@@ -164,6 +186,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             options.prompt = process.env.DT_ORGANIZE_PROMPT;
         }
         const result = await processRecord(args.uuid, options);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      }
+
+      case "create_record": {
+        const result = await runJxa("write", "createRecord", [
+          JSON.stringify({
+            name: args.name,
+            type: args.type || "markdown",
+            content: args.content,
+            database: args.database,
+            groupPath: args.groupPath,
+            url: args.url,
+            tags: args.tags
+          })
+        ]);
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       }
 
