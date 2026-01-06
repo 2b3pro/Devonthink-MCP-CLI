@@ -2,72 +2,16 @@
 // Modify properties of a DEVONthink record (rename, tags, move)
 // Usage: osascript -l JavaScript modifyRecordProperties.js '<json>'
 // JSON format: {"uuid":"...","newName":"...","tagsAdd":[],"tagsRemove":[],"tagsReplace":[],"destGroupUuid":"...","comment":"...","customMetadata":{}}
-// Required: uuid
-// Optional: newName, tagsAdd, tagsRemove, tagsReplace, destGroupUuid (path or UUID), comment, customMetadata
 //
-// Examples:
-//   osascript -l JavaScript modifyRecordProperties.js '{"uuid":"ABC123","newName":"New Title"}'
-//   osascript -l JavaScript modifyRecordProperties.js '{"uuid":"ABC123","tagsAdd":["important","review"]}'
-//   osascript -l JavaScript modifyRecordProperties.js '{"uuid":"ABC123","tagsReplace":["only","these","tags"]}'
-//   osascript -l JavaScript modifyRecordProperties.js '{"uuid":"ABC123","destGroupUuid":"DEF456"}'
-//   osascript -l JavaScript modifyRecordProperties.js '{"uuid":"ABC123","destGroupUuid":"/Path/To/Group"}'
-
-ObjC.import("Foundation");
-
-function getArg(index, defaultValue) {
-  const args = $.NSProcessInfo.processInfo.arguments;
-  if (args.count <= index) return defaultValue;
-  const arg = ObjC.unwrap(args.objectAtIndex(index));
-  return arg && arg.length > 0 ? arg : defaultValue;
-}
-
-// Detect if string looks like a UUID or x-devonthink-item:// URL
-function isUuid(str) {
-  if (!str || typeof str !== "string") return false;
-  if (str.startsWith("x-devonthink-item://")) return true;
-  if (str.includes("/")) return false;
-  return /^[A-F0-9-]{8,}$/i.test(str) && str.includes("-");
-}
-
-// Extract UUID from x-devonthink-item:// URL or return raw UUID
-function extractUuid(str) {
-  if (!str) return null;
-  const urlMatch = str.match(/^x-devonthink-item:\/\/([A-F0-9-]+)(?:\?.*)?$/i);
-  if (urlMatch) return urlMatch[1];
-  if (isUuid(str)) return str;
-  return str; // Return as-is, let DEVONthink handle validation
-}
-
-// Resolve group by path or UUID
-function resolveGroup(theApp, ref, database) {
-  if (!ref) return null;
-  if (isUuid(ref)) {
-    const group = theApp.getRecordWithUuid(extractUuid(ref));
-    if (!group) throw new Error("Group not found with UUID: " + ref);
-    const type = group.recordType();
-    if (type !== "group" && type !== "smart group") {
-      throw new Error("UUID does not point to a group: " + type);
-    }
-    return group;
-  }
-  // Navigate path
-  let current = database.root();
-  const parts = ref.split("/").filter(p => p.length > 0);
-  for (const part of parts) {
-    const children = current.children();
-    const found = children.find(c => c.name() === part);
-    if (!found) throw new Error("Group not found in path: " + part);
-    current = found;
-  }
-  return current;
-}
+// Dependencies (injected by runner):
+// - getArg, isUuid, extractUuid, resolveGroup
 
 const jsonArg = getArg(4, null);
 
 if (!jsonArg) {
   JSON.stringify({
     success: false,
-    error: 'Usage: modifyRecordProperties.js \'{"uuid":"...","newName":"..."}\''
+    error: 'Usage: modifyRecordProperties.js \'{\"uuid\":\"...\",\"newName\":\"...\"}\'`
   });
 } else {
   try {

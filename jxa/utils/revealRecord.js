@@ -7,42 +7,8 @@
 //   target - "self" (default) or "parent"
 //   mode   - "window" (default), "tab", or "reveal" (in-place navigation)
 //
-// Examples:
-//   osascript -l JavaScript revealRecord.js "ABC123"                    # record in new window
-//   osascript -l JavaScript revealRecord.js "ABC123" parent             # parent folder in new window
-//   osascript -l JavaScript revealRecord.js "ABC123" self tab           # record in new tab
-//   osascript -l JavaScript revealRecord.js "ABC123" parent tab         # parent folder in new tab
-//   osascript -l JavaScript revealRecord.js "ABC123" self reveal        # navigate to record in frontmost window
-//   osascript -l JavaScript revealRecord.js "ABC123" parent reveal      # navigate to parent in frontmost window
-//
-// NOTE: Use locationGroup() not parent() to access containing folder in JXA
-// NOTE: "reveal" mode sets the window's root property to navigate in-place
-
-ObjC.import("Foundation");
-
-// Detect if string looks like a UUID or x-devonthink-item:// URL
-function isUuid(str) {
-  if (!str || typeof str !== "string") return false;
-  if (str.startsWith("x-devonthink-item://")) return true;
-  if (str.includes("/")) return false;
-  return /^[A-F0-9-]{8,}$/i.test(str) && str.includes("-");
-}
-
-// Extract UUID from x-devonthink-item:// URL or return raw UUID
-function extractUuid(str) {
-  if (!str) return null;
-  const urlMatch = str.match(/^x-devonthink-item:\/\/([A-F0-9-]+)(?:\?.*)?$/i);
-  if (urlMatch) return urlMatch[1];
-  if (isUuid(str)) return str;
-  return str; // Return as-is, let DEVONthink handle validation
-}
-
-function getArg(index, defaultValue) {
-  const args = $.NSProcessInfo.processInfo.arguments;
-  if (args.count <= index) return defaultValue;
-  const arg = ObjC.unwrap(args.objectAtIndex(index));
-  return arg && arg.length > 0 ? arg : defaultValue;
-}
+// Dependencies (injected by runner):
+// - getArg, extractUuid
 
 const uuid = getArg(4, null);
 const target = getArg(5, "self");

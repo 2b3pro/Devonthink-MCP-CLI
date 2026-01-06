@@ -7,6 +7,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readFile } from 'node:fs/promises';
 
 const execFileAsync = promisify(execFile);
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -21,11 +22,23 @@ const JXA_DIR = resolve(__dirname, '..', 'jxa');
  */
 export async function runJxa(category, scriptName, args = []) {
   const scriptPath = resolve(JXA_DIR, category, `${scriptName}.js`);
+  const helpersPath = resolve(JXA_DIR, 'utils', 'helpers.js');
 
   try {
+    const [scriptContent, helpersContent] = await Promise.all([
+      readFile(scriptPath, 'utf8'),
+      readFile(helpersPath, 'utf8')
+    ]);
+
+    // Remove shebang from script if present
+    const cleanScript = scriptContent.replace(/^#!.*\n/, '');
+    
+    // Combine helpers and script
+    const fullScript = `${helpersContent}\n${cleanScript}`;
+
     const { stdout, stderr } = await execFileAsync(
       'osascript',
-      ['-l', 'JavaScript', scriptPath, ...args],
+      ['-l', 'JavaScript', '-e', fullScript, '--', ...args],
       {
         timeout: 60000, // 60 second timeout
         maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large results
