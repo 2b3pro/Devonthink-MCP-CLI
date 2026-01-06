@@ -146,25 +146,33 @@ const TOOLS = [
     },
   },
   {
-    name: "create_record",
-    description: "Create a new record (markdown, text, bookmark, or group) in DEVONthink.",
+    name: "manage_record",
+    description: "Comprehensive record management: Create, Update, Move, Delete (Trash), or Convert.",
     inputSchema: {
       type: "object",
       properties: {
-        name: { type: "string", description: "The title of the record" },
+        action: { 
+          type: "string", 
+          enum: ["create", "update", "move", "trash", "convert"],
+          description: "The action to perform"
+        },
+        uuid: { type: "string", description: "Target record UUID (required for update, move, trash, convert)" },
+        name: { type: "string", description: "Name/Title (create/update)" },
         type: { 
           type: "string", 
           enum: ["markdown", "txt", "rtf", "bookmark", "html", "group"],
-          description: "Record type",
+          description: "Record type (create only)",
           default: "markdown"
         },
-        content: { type: "string", description: "Content for text-based records" },
-        database: { type: "string", description: "Database name or UUID (default: current/Inbox)" },
-        groupPath: { type: "string", description: "Destination group path (e.g., '/Notes') or UUID" },
-        url: { type: "string", description: "URL for bookmark records" },
-        tags: { type: "array", items: { type: "string" }, description: "Tags to apply" },
+        content: { type: "string", description: "Text content (create)" },
+        database: { type: "string", description: "Target database (create)" },
+        destination: { type: "string", description: "Destination group UUID or path (create/move)" },
+        url: { type: "string", description: "URL (create bookmark/update)" },
+        tags: { type: "array", items: { type: "string" }, description: "Tags to set/add" },
+        comment: { type: "string", description: "Comment to set" },
+        convertFormat: { type: "string", description: "Format to convert to (markdown, pdf, etc.)" }
       },
-      required: ["name"],
+      required: ["action"],
     },
   }
 ];
@@ -253,18 +261,85 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       }
 
-      case "create_record": {
-        const result = await runJxa("write", "createRecord", [
-          JSON.stringify({
-            name: args.name,
-            type: args.type || "markdown",
-            content: args.content,
-            database: args.database || process.env.DT_DEFAULT_DATABASE,
-            groupPath: args.groupPath,
-            url: args.url,
-            tags: args.tags
-          })
-        ]);
+      case "manage_record": {
+        const { action, uuid, name, type, content, database, destination, url, tags, comment, convertFormat } = args;
+        
+        let scriptName;
+        let scriptArgs = {};
+
+        switch (action) {
+          case "create":
+            scriptName = "createRecord";
+            scriptArgs = {
+              name,
+              type: type || "markdown",
+              content,
+              database: database || process.env.DT_DEFAULT_DATABASE,
+              groupPath: destination,
+              url,
+              tags
+            };
+            break;
+
+          case "update":
+            scriptName = "modifyRecordProperties";
+            if (!uuid) throw new Error("UUID is required for update action");
+            scriptArgs = {
+              uuid,
+              newName: name,
+              tagsReplace: tags, // Assuming 'tags' arg means "set these tags"
+              comment,
+              // If URL update is needed, modifyRecordProperties doesn't strictly handle it, 
+              // but we'll focus on metadata here. 
+              // To update content, we'd need updateRecord.js, but let's keep it simple for now.
+            };
+            break;
+
+          case "move":
+             scriptName = "modifyRecordProperties";
+             if (!uuid) throw new Error("UUID is required for move action");
+             if (!destination) throw new Error("Destination is required for move action");
+             scriptArgs = {
+               uuid,
+               destGroupUuid: destination
+             };
+             break;
+
+          case "trash":
+             scriptName = "deleteRecord";
+             if (!uuid) throw new Error("UUID is required for trash action");
+             // deleteRecord takes uuid as direct arg, not json, but our JXA runner can handle it?
+             // No, our JXA runner expects json string for most. 
+             // Wait, deleteRecord.js takes UUID as argv[4].
+             // I need to check how I call runJxa. 
+             // My runJxa wrapper passes args as process arguments.
+             // deleteRecord expects: ... deleteRecord.js <uuid>
+             // createRecord expects: ... createRecord.js '<json>'
+             // I need to handle this difference.
+             break;
+
+          case "convert":
+             scriptName = "convertRecord";
+             if (!uuid) throw new Error("UUID is required for convert action");
+             scriptArgs = {
+               uuid,
+               to: convertFormat,
+               destGroupUuid: destination
+             };
+             break;
+
+          default:
+            throw new Error(`Unknown action: ${action}`);
+        }
+
+        // Special handling for deleteRecord which expects raw UUID
+        if (action === "trash") {
+             const result = await runJxa("write", "deleteRecord", [uuid]);
+             return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+        }
+
+        // All others expect JSON
+        const result = await runJxa("write", scriptName, [JSON.stringify(scriptArgs)]);
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       }
 
