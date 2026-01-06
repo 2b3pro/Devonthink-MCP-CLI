@@ -517,3 +517,4 @@ Specialized scripts handle batched operations:
 - Use `-t/--tag` as repeatable option for adding tags
 - Config files use YAML format in `~/.config/dt/`
 - Use the helper function to prepare the UUIDs as sometimes user may provide it in the form of a `x-devonthink-item://` URL
+- Applescript/JXA dictionary is here - refer to it often as it will save you time: `sdef /Applications/DEVONthink.app`

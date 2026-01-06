@@ -1,6 +1,6 @@
 # DEVONthink MCP & CLI (dt)
 
-![devonthink-cli header](devonthink-cli-header.png)
+![devonthink-mcp-cli header](devonthink-mcp-cli-header.png)
 
 (unofficial) **The Intelligent Bridge for DEVONthink 4 on macOS.**
 
@@ -33,7 +33,6 @@ DEVONthink 4 includes impressive built-in AI features, so why use `dt`?
 | **Focus** | Human-in-the-loop GUI assistance. | Headless, agent-native automation. |
 | **Connectivity** | Local app only. | Connects to Claude, GPT, and CLI pipelines. |
 | **Batching** | Manual selection or complex scripts. | Automatic **Look-Ahead Optimization**. |
-| **AI Agnostic** | Uses specific internal models. | Use **any** engine (Claude, GPT, Gemini, Ollama). |
 | **Verification** | Visual check only. | **Programmatic & AI-assisted** resource repair. |
 
 ---
@@ -52,7 +51,7 @@ This tool includes a **Model Context Protocol (MCP)** server. When added to Clau
 
 ```bash
 # Clone or download this repository
-cd devonthink-cli
+cd devonthink-mcp-cli
 
 # Install dependencies
 npm install
@@ -116,5 +115,7 @@ dt queue execute
 ## 📄 License
 MIT
 
-**Created by [Ian Shen (2b3pro)](https://github.com/2b3pro)**  
+**Created by [Ian Shen (2b3pro)](https://github.com/2b3pro)**
 **2B3 PRODUCTIONS LLC**
+
+[Buy me a coffee ☕️!](https://paypal.me/2b3/5)
