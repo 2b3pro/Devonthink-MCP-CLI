@@ -39,12 +39,18 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io) is an open s
          ],
          "env": {
            "PATH": "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
-           "DT_ORGANIZE_PROMPT": "YOUR-SOP-RECORD-UUID-HERE"
+           "DT_ORGANIZE_PROMPT": "YOUR-SOP-RECORD-UUID-HERE",
+           "DT_DEFAULT_DATABASE": "Inbox"
          }
        }
      }
    }
    ```
+
+   **Environment Variables:**
+   - `DT_ORGANIZE_PROMPT`: UUID of a record containing organization instructions.
+   - `DT_SUMMARIZE_PROMPT`: UUID of a record containing summarization instructions.
+   - `DT_DEFAULT_DATABASE`: Default database name or UUID for creating new records (optional).
 
 4. **Restart Claude Desktop:**
    Quit and restart the Claude app. You should see a generic "hammer/tool" icon or indicator that the `devonthink` server is connected.

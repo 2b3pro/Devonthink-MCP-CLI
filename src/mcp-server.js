@@ -195,7 +195,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             name: args.name,
             type: args.type || "markdown",
             content: args.content,
-            database: args.database,
+            database: args.database || process.env.DT_DEFAULT_DATABASE,
             groupPath: args.groupPath,
             url: args.url,
             tags: args.tags
