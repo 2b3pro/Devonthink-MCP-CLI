@@ -1,4 +1,4 @@
-# DEVONthink CLI (dt)
+# DEVONthink MCP & CLI (dt)
 
 ![devonthink-cli header](devonthink-cli-header.png)
 
@@ -9,6 +9,10 @@ A unified command-line interface for DEVONthink 4 on macOS.
 - macOS (DEVONthink only runs on macOS)
 - Node.js 18 or later
 - DEVONthink 4 installed and running
+
+## 🤖 AI Integration (MCP)
+This tool includes a **Model Context Protocol (MCP)** server, allowing **Claude Desktop** to search and read your DEVONthink database directly.
+👉 **[Read the Setup Guide (MCP.md)](MCP.md)**
 
 ## Installation
 
@@ -239,6 +243,52 @@ dt modify <uuid> --comment "This is a note about this record"
 
 # Set custom metadata
 dt modify <uuid> --meta "author=John Doe" --meta "year=2024"
+```
+
+### Intelligent Organization (AI Librarian)
+
+Clean up messy databases by automatically performing OCR, renaming, tagging, and summarizing records based on their content.
+
+```bash
+# Fully automate organization (OCR + Rename + Tag + Summarize)
+dt organize <uuid> --auto
+
+# Process everything in the Inbox
+dt list inbox -q | dt organize - --auto
+
+# Specific tasks
+dt organize <uuid> --rename     # Suggest professional title
+dt organize <uuid> --tag        # Suggest semantic tags
+dt organize <uuid> --summarize  # Add summary to record comment
+dt organize <uuid> --ocr        # Perform OCR if text is missing
+dt organize <uuid> --prompt <uuid> # Use custom instructions from a record
+
+# Set a global default prompt for organization
+export DT_ORGANIZE_PROMPT="ABC-123-DEF"
+```
+
+### AI Summarization
+
+Generate concise summaries using a specialized prompt or global SOP.
+
+```bash
+# Summarize a record and save to its comment
+dt summarize <uuid>
+
+# Just print the summary to terminal
+dt summarize <uuid> --print
+
+# Use a specific summarization SOP
+dt summarize <uuid> --prompt <uuid>
+
+# Native summarization (extract highlights to markdown)
+dt summarize <uuid> --native --type annotations --format markdown
+
+# Native content summarization
+dt summarize <uuid> --native --type content --format rich
+
+# Set a global default summarization prompt
+export DT_SUMMARIZE_PROMPT="GHI-789-JKL"
 ```
 
 ### Update Content

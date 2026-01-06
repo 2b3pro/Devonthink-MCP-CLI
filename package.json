@@ -1,7 +1,7 @@
 {
-  "name": "devonthink-cli",
-  "version": "1.6.1",
-  "description": "Command-line interface for DEVONthink 4 on macOS",
+  "name": "devonthink-mcp",
+  "version": "2.0.0-alpha.1",
+  "description": "Command-line and MCP interface for DEVONthink 4 on macOS",
   "type": "module",
   "main": "src/index.js",
   "bin": {
@@ -30,9 +30,9 @@
     "darwin"
   ],
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.1",
     "commander": "^12.1.0"
   },
-  "devDependencies": {},
   "files": [
     "bin/",
     "src/",

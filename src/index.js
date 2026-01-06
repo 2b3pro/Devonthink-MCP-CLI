@@ -29,15 +29,18 @@ import { registerMergeCommand } from './commands/merge.js';
 import { registerTranscribeCommand } from './commands/transcribe.js';
 import { registerChatCommand } from './commands/chat.js';
 import { registerLinkCommand } from './commands/link.js';
+import { registerMcpCommand } from './commands/mcp.js';
+import { registerOrganizeCommand } from './commands/organize.js';
+import { registerSummarizeCommand } from './commands/summarize.js';
 
-const VERSION = '1.6.0';
+const VERSION = '2.0.0-alpha.1';
 
 export function createProgram() {
   const program = new Command();
 
   program
     .name('dt')
-    .description('Command-line interface for DEVONthink 4')
+    .description('Command-line and MCP interface for DEVONthink 4')
     .version(VERSION, '-v, --version', 'Show version number')
     .configureHelp({
       sortSubcommands: true,
@@ -70,6 +73,9 @@ export function createProgram() {
   registerTranscribeCommand(program);
   registerChatCommand(program);
   registerLinkCommand(program);
+  registerMcpCommand(program);
+  registerOrganizeCommand(program);
+  registerSummarizeCommand(program);
 
   // Add completion command
   program
@@ -88,7 +94,7 @@ export function createProgram() {
 function generateCompletion(shell) {
   const commands = [
     'search', 'get', 'list', 'create', 'import', 'index', 'export', 'modify', 'update', 'delete',
-    'replicate', 'duplicate', 'move', 'merge', 'classify', 'group', 'reveal', 'batch', 'status', 'download', 'reading-list', 'convert', 'deconsolidate', 'transcribe', 'chat', 'link', 'unlink', 'completion'
+    'replicate', 'duplicate', 'move', 'merge', 'classify', 'group', 'reveal', 'batch', 'status', 'download', 'reading-list', 'convert', 'deconsolidate', 'transcribe', 'chat', 'link', 'unlink', 'mcp', 'organize', 'summarize', 'completion'
   ];
 
   const subcommands = {
@@ -100,7 +106,10 @@ function generateCompletion(shell) {
     batch: ['preview', 'verify'],
     download: ['add', 'url', 'markup', 'json', 'start', 'stop'],
     'reading-list': ['add'],
-    chat: ['ask', 'models', 'capabilities']
+    chat: ['ask', 'models', 'capabilities'],
+    mcp: ['run', 'config'],
+    organize: [],
+    summarize: []
   };
 
   switch (shell) {
@@ -154,6 +163,18 @@ _dt_completions() {
             ;;
         chat)
             COMPREPLY=( $(compgen -W "ask models capabilities" -- ${cur}) )
+            return 0
+            ;;
+        mcp)
+            COMPREPLY=( $(compgen -W "run config" -- ${cur}) )
+            return 0
+            ;;
+        organize|tidy)
+            # No subcommands
+            return 0
+            ;;
+        summarize|sum)
+            # No subcommands
             return 0
             ;;
         link|ln)
@@ -214,10 +235,13 @@ _dt() {
         'chat:AI chat with DEVONthink'
         'link:Link records or enable linking'
         'unlink:Unlink records or disable linking'
+        'mcp:Model Context Protocol (MCP) server'
+        'organize:Intelligently organize records'
+        'summarize:Generate AI summary of record(s)'
         'completion:Generate shell completion script'
     )
 
-    local -a search_commands get_commands list_commands create_commands classify_commands batch_commands reading_list_commands chat_commands
+    local -a search_commands get_commands list_commands create_commands classify_commands batch_commands reading_list_commands chat_commands mcp_commands
 
     search_commands=(
         'query:Full-text search for records'
@@ -282,6 +306,11 @@ _dt() {
         'capabilities:Get model capabilities'
     )
 
+    mcp_commands=(
+        'run:Run the MCP server'
+        'config:Display Claude Desktop config'
+    )
+
     _arguments -C \\
         '1: :->command' \\
         '2: :->subcommand' \\
@@ -319,6 +348,9 @@ _dt() {
                     ;;
                 chat)
                     _describe 'subcommand' chat_commands
+                    ;;
+                mcp)
+                    _describe 'subcommand' mcp_commands
                     ;;
             esac
             ;;
@@ -359,61 +391,21 @@ complete -c dt -f -n "__fish_use_subcommand" -a "deconsolidate" -d "Move record 
 complete -c dt -f -n "__fish_use_subcommand" -a "chat" -d "AI chat with DEVONthink"
 complete -c dt -f -n "__fish_use_subcommand" -a "link" -d "Link records or enable linking"
 complete -c dt -f -n "__fish_use_subcommand" -a "unlink" -d "Unlink records or disable linking"
+complete -c dt -f -n "__fish_use_subcommand" -a "mcp" -d "Model Context Protocol (MCP) server"
+complete -c dt -f -n "__fish_use_subcommand" -a "organize" -d "Intelligently organize records"
+complete -c dt -f -n "__fish_use_subcommand" -a "summarize" -d "Generate AI summary of record(s)"
 complete -c dt -f -n "__fish_use_subcommand" -a "completion" -d "Generate shell completion"
 
 # search subcommands
-complete -c dt -f -n "__fish_seen_subcommand_from search" -a "query" -d "Full-text search for records"
-complete -c dt -f -n "__fish_seen_subcommand_from search" -a "comment" -d "Lookup records by comment"
-complete -c dt -f -n "__fish_seen_subcommand_from search" -a "hash" -d "Lookup records by content hash"
-complete -c dt -f -n "__fish_seen_subcommand_from search" -a "file" -d "Lookup records by filename"
-complete -c dt -f -n "__fish_seen_subcommand_from search" -a "path" -d "Lookup records by path"
-complete -c dt -f -n "__fish_seen_subcommand_from search" -a "tags" -d "Lookup records by tags"
-complete -c dt -f -n "__fish_seen_subcommand_from search" -a "url" -d "Lookup records by URL"
-complete -c dt -f -n "__fish_seen_subcommand_from search" -a "show" -d "Open search in DEVONthink window"
-
-# get subcommands
-complete -c dt -f -n "__fish_seen_subcommand_from get" -a "props" -d "Get record properties"
-complete -c dt -f -n "__fish_seen_subcommand_from get" -a "preview" -d "Get plain text preview"
-complete -c dt -f -n "__fish_seen_subcommand_from get" -a "selection" -d "Get selected records"
-complete -c dt -f -n "__fish_seen_subcommand_from get" -a "concordance" -d "Get word list (concordance)"
-complete -c dt -f -n "__fish_seen_subcommand_from get" -a "transcribe" -d "Transcribe speech/text from media"
-complete -c dt -f -n "__fish_seen_subcommand_from get" -a "related" -d "Get related records"
-
-# list subcommands
-complete -c dt -f -n "__fish_seen_subcommand_from list ls" -a "group" -d "List group contents"
-complete -c dt -f -n "__fish_seen_subcommand_from list ls" -a "inbox" -d "List Inbox items"
-complete -c dt -f -n "__fish_seen_subcommand_from list ls" -a "tag" -d "List records by tag"
-
-# create subcommands
-complete -c dt -f -n "__fish_seen_subcommand_from create" -a "record" -d "Create record with properties"
-complete -c dt -f -n "__fish_seen_subcommand_from create" -a "markdown" -d "Create Markdown from URL"
-complete -c dt -f -n "__fish_seen_subcommand_from create" -a "pdf" -d "Create PDF from URL"
-complete -c dt -f -n "__fish_seen_subcommand_from create" -a "web" -d "Create web document from URL"
-complete -c dt -f -n "__fish_seen_subcommand_from create" -a "image" -d "Generate AI image from prompt"
-
-# classify subcommands
-complete -c dt -f -n "__fish_seen_subcommand_from classify" -a "suggest" -d "Get classification proposals"
-complete -c dt -f -n "__fish_seen_subcommand_from classify" -a "batch" -d "Batch classify records"
-
-# batch subcommands
-complete -c dt -f -n "__fish_seen_subcommand_from batch" -a "preview" -d "Get multiple previews"
-complete -c dt -f -n "__fish_seen_subcommand_from batch" -a "verify" -d "Verify multiple records"
-
-# download subcommands
-complete -c dt -f -n "__fish_seen_subcommand_from download dl" -a "add" -d "Add URL to download manager"
-complete -c dt -f -n "__fish_seen_subcommand_from download dl" -a "url" -d "Download URL content"
-complete -c dt -f -n "__fish_seen_subcommand_from download dl" -a "markup" -d "Download HTML/XML markup"
-complete -c dt -f -n "__fish_seen_subcommand_from download dl" -a "json" -d "Download JSON from URL"
-complete -c dt -f -n "__fish_seen_subcommand_from download dl" -a "start" -d "Start download manager"
-complete -c dt -f -n "__fish_seen_subcommand_from download dl" -a "stop" -d "Stop download manager"
-
-# reading-list subcommands
-complete -c dt -f -n "__fish_seen_subcommand_from reading-list rl" -a "add" -d "Add record or URL to reading list"
-
+--
 # chat subcommands
 complete -c dt -f -n "__fish_seen_subcommand_from chat" -a "ask" -d "Send a chat message"
 complete -c dt -f -n "__fish_seen_subcommand_from chat" -a "models" -d "List available chat models"
 complete -c dt -f -n "__fish_seen_subcommand_from chat" -a "capabilities" -d "Get model capabilities"
+
+# mcp subcommands
+complete -c dt -f -n "__fish_seen_subcommand_from mcp" -a "run" -d "Run the MCP server"
+complete -c dt -f -n "__fish_seen_subcommand_from mcp" -a "config" -d "Display Claude Desktop config"
 
 # completion subcommands
 complete -c dt -f -n "__fish_seen_subcommand_from completion" -a "bash zsh fish"

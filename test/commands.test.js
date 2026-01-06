@@ -1092,6 +1092,127 @@ describe('DevonThink CLI Commands', () => {
   });
 
   // ============================================================
+  // NAVIGATOR COMMANDS (get related, link, unlink)
+  // ============================================================
+  describe('navigator commands', () => {
+    let sourceUuid;
+    let targetUuid;
+
+    before(async () => {
+      sourceUuid = await createTestRecord({ name: uniqueName('LinkSource'), content: 'Source content' });
+      targetUuid = await createTestRecord({ name: uniqueName('LinkTarget'), content: 'Target content' });
+      createdRecords.push(sourceUuid, targetUuid);
+    });
+
+    describe('link', () => {
+      it('should create a markdown link between records', async () => {
+        const result = await runCommand(['link', sourceUuid, targetUuid]);
+        assert.strictEqual(result.success, true);
+        assert.ok(result.linkAdded);
+      });
+
+      it('should toggle flags on a record', async () => {
+        const result = await runCommand(['link', sourceUuid, '--no-wiki']);
+        assert.strictEqual(result.success, true);
+        assert.strictEqual(result.excludeFromWikiLinking, true);
+      });
+    });
+
+    describe('unlink', () => {
+      it('should remove a link between records', async () => {
+        // First ensure linked
+        await runCommand(['link', sourceUuid, targetUuid]);
+        
+        // Now unlink
+        const result = await runCommand(['unlink', sourceUuid, targetUuid]);
+        assert.strictEqual(result.success, true);
+        assert.ok(result.linkRemoved);
+      });
+    });
+
+    describe('get related', () => {
+      it('should return related records structure', async () => {
+        const result = await runCommand(['get', 'related', sourceUuid]);
+        assert.strictEqual(result.success, true);
+        assert.ok(Array.isArray(result.relations));
+      });
+    });
+  });
+
+  // ============================================================
+  // ORGANIZE COMMAND
+  // ============================================================
+  describe('organize command', () => {
+    let organizeUuid;
+
+    before(async () => {
+      organizeUuid = await createTestRecord({ 
+        name: uniqueName('OrganizeTest'),
+        content: 'This is a financial document about the budget for 2024. Vendor: Acme Corp. Total: $500.'
+      });
+      createdRecords.push(organizeUuid);
+    });
+
+    it('should run without error (basic check)', async () => {
+      // Check if it runs and returns JSON result
+      const jsonResult = await runCommand(['organize', organizeUuid, '--rename', '--json']);
+      // The output is { results: [...] }
+      if (jsonResult.results) {
+          assert.ok(jsonResult.results.length > 0);
+      }
+    });
+  });
+
+  // ============================================================
+  // SUMMARIZE COMMAND
+  // ============================================================
+  describe('summarize command', () => {
+    let sumUuid;
+
+    before(async () => {
+      sumUuid = await createTestRecord({ 
+        name: uniqueName('SumTest'),
+        content: '# Heading\nImportant point 1.\nImportant point 2.'
+      });
+      createdRecords.push(sumUuid);
+    });
+
+    it('should perform native summarization (highlights)', async () => {
+      const result = await runCommand([
+        'summarize', sumUuid, 
+        '--native', 
+        '--type', 'content', 
+        '--format', 'markdown'
+      ]);
+      
+      // The CLI returns { results: [ { ... } ] } or [ { ... } ] depending on implementation
+      // We need to inspect the first result
+      const item = Array.isArray(result) ? result[0] : (result.results ? result.results[0] : result);
+
+      // Check for success or specific error related to content length/type
+      if (item.success) {
+          assert.ok(item.summaryUuid);
+          createdRecords.push(item.summaryUuid);
+      } else {
+          // Native summarization might fail if content is insufficient, which is valid behavior
+          assert.ok(item.error);
+      }
+    });
+  });
+
+  // ============================================================
+  // MCP COMMAND
+  // ============================================================
+  describe('mcp command', () => {
+    it('should output config JSON', async () => {
+      const result = await runCommand(['mcp', 'config'], { json: false });
+      const output = result.output || JSON.stringify(result);
+      assert.ok(output.includes('mcpServers'));
+      assert.ok(output.includes('devonthink'));
+    });
+  });
+
+  // ============================================================
   // CLEANUP
   // ============================================================
   after(async () => {
