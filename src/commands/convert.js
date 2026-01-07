@@ -31,6 +31,15 @@ export function registerConvertCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output converted record UUID')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "originalUuid": "string",
+    "convertedUuid": "string",
+    "convertedName": "string",
+    "format": "string"
+  }
+
 Examples:
   dt convert ABCD-1234 --to markdown
   dt convert ABCD-1234 --to pdf --group "/Exports"

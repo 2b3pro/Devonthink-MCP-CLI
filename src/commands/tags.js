@@ -325,6 +325,16 @@ export function registerTagsCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output tag names (one per line)')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "database": "string",
+    "totalTags": number,
+    "tags": [
+      { "tag": "string", "count": number }
+    ]
+  }
+
 Examples:
   dt tags list -d "Research"
   dt tags list -d "Research" --sort count --min-count 5
@@ -384,6 +394,23 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output problem counts')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "database": "string",
+    "totalTags": number,
+    "summary": { "totalProblems": number },
+    "problems": {
+      "case": [],
+      "malformed": [],
+      "punctuationVariants": [],
+      "mlArtifacts": [],
+      "scannerArtifacts": [],
+      "noise": [],
+      "lowUsage": []
+    }
+  }
+
 Examples:
   dt tags analyze -d "Research"
   dt tags analyze -d "Research" --category case --export rules.yaml
@@ -480,6 +507,14 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Minimal output')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "target": "string",
+    "sourcesMerged": ["string"],
+    "survivingTag": "string"
+  }
+
 Examples:
   dt tags merge --target "correct" --sources "Wrong" "WRONG" -d "Research"
   dt tags merge --target "correct" --sources "Wrong" --dry-run
@@ -540,6 +575,14 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Minimal output')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "from": "string",
+    "to": "string",
+    "recordCount": number
+  }
+
 Examples:
   dt tags rename --from "old" --to "new" -d "Research"
   dt tags rename --from "old" --to "new" --dry-run
@@ -599,6 +642,14 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Minimal output')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "deleted": [ { "name": "string", "recordCount": number } ],
+    "totalDeleted": number,
+    "totalRecordsAffected": number
+  }
+
 Examples:
   dt tags delete "temp" "old" -d "Research"
   dt tags delete "temp" --dry-run

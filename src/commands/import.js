@@ -34,6 +34,15 @@ export function registerImportCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUID of imported record')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "name": "string",
+    "location": "string",
+    "database": "string"
+  }
+
 Examples:
   dt import "/path/to/file.pdf" -d "Research" -g "/Papers"
   dt import "/path/to/audio.m4a" -d "Inbox" --transcribe --language en

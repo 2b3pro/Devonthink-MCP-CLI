@@ -18,6 +18,15 @@ export function registerGroupCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output group UUID')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "name": "string",
+    "path": "string",
+    "created": boolean
+  }
+
 Examples:
   dt group "/Projects/Client A" -d "Research"
   dt mkdir "Archive/2024" -d "Research"

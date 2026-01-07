@@ -50,6 +50,22 @@ export function registerSearchCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUIDs')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "results": [
+      {
+        "uuid": "string",
+        "name": "string",
+        "recordType": "string",
+        "database": "string",
+        "location": "string",
+        "tags": ["string"]
+      }
+    ],
+    "totalCount": number
+  }
+
 Examples:
   dt search q "project plan"
   dt search q "machine learning" -d "Research"
@@ -101,6 +117,23 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUIDs')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "lookupType": "comment",
+    "query": "string",
+    "count": number,
+    "records": [
+      {
+        "uuid": "string",
+        "name": "string",
+        "type": "string",
+        "database": "string",
+        "location": "string"
+      }
+    ]
+  }
+
 Examples:
   dt search comment "client notes"
   dt search comment "needs follow up" -d "Research"
@@ -133,6 +166,23 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUIDs')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "lookupType": "hash",
+    "query": "string",
+    "count": number,
+    "records": [
+      {
+        "uuid": "string",
+        "name": "string",
+        "type": "string",
+        "database": "string",
+        "location": "string"
+      }
+    ]
+  }
+
 Examples:
   dt search hash "0cc175b9c0f1b6a831c399e269772661"
   dt search hash "deadbeef" -d "Research"
@@ -165,6 +215,23 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUIDs')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "lookupType": "file",
+    "query": "string",
+    "count": number,
+    "records": [
+      {
+        "uuid": "string",
+        "name": "string",
+        "type": "string",
+        "database": "string",
+        "location": "string"
+      }
+    ]
+  }
+
 Examples:
   dt search file "Invoice-2024.pdf"
   dt search file "Meeting Notes" -d "Work"
@@ -197,6 +264,23 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUIDs')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "lookupType": "path",
+    "query": "string",
+    "count": number,
+    "records": [
+      {
+        "uuid": "string",
+        "name": "string",
+        "type": "string",
+        "database": "string",
+        "location": "string"
+      }
+    ]
+  }
+
 Examples:
   dt search path "/Projects/Client A/Contracts"
   dt search path "Research/Papers/2024" -d "Research"
@@ -230,6 +314,23 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUIDs')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "lookupType": "tags",
+    "query": ["string"],
+    "count": number,
+    "records": [
+      {
+        "uuid": "string",
+        "name": "string",
+        "type": "string",
+        "database": "string",
+        "location": "string"
+      }
+    ]
+  }
+
 Examples:
   dt search tags urgent client
   dt search tags "to-review" "2024" --any -d "Research"
@@ -263,6 +364,23 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUIDs')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "lookupType": "url",
+    "query": "string",
+    "count": number,
+    "records": [
+      {
+        "uuid": "string",
+        "name": "string",
+        "type": "string",
+        "database": "string",
+        "location": "string"
+      }
+    ]
+  }
+
 Examples:
   dt search url "https://example.com/article"
   dt search url "https://example.com" -d "Research"
@@ -294,6 +412,13 @@ Examples:
     .option('--json', 'Output raw JSON')
     .option('--pretty', 'Pretty print JSON output')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "query": "string",
+    "message": "string"
+  }
+
 Examples:
   dt search show "project plan"
   dt search ui "tags:urgent AND kind:pdf"

@@ -24,6 +24,18 @@ export function registerUpdateCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Minimal output')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "name": "string",
+    "recordType": "string",
+    "target": "content|comment|customMetadata",
+    "mode": "setting|inserting|appending",
+    "textLength": number,
+    "field": "string" // optional (for customMetadata)
+  }
+
 Examples:
   dt update ABCD-1234 -c "New content"
   dt update ABCD-1234 -f ./notes.md --comments

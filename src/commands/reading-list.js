@@ -21,6 +21,14 @@ export function registerReadingListCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Minimal output')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "mode": "record|url",
+    "uuid": "string", // if record
+    "url": "string" // if URL
+  }
+
 Examples:
   dt reading-list add "https://example.com/article"
   dt rl add ABCD-1234

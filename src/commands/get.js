@@ -27,17 +27,29 @@ export function registerGetCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUID')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "name": "string",
+    "recordType": "string",
+    "database": "string",
+    "location": "string",
+    "path": "string",
+    "...": "all other record properties"
+  }
+
 Available properties by category:
 
   Identity:
     uuid, name, filename, original name, id, database, path, location
 
   Content & Type:
-    kind, type, record type, MIME type, plain text, rich text, source, url, 
+    kind, type, record type, MIME type, plain text, rich text, source, url,
     reference URL, web archive, formatted note, markdown source
 
   Dates:
-    creation date, modification date, addition date, opening date, 
+    creation date, modification date, addition date, opening date,
     document date, all document dates
 
   Organization & Metadata:
@@ -48,17 +60,17 @@ Available properties by category:
     flag, flagged, unread, state, locked, locking, pending, indexed, encrypted
 
   Metrics:
-    size, word count, character count, page count, duration, width, height, 
+    size, word count, character count, page count, duration, width, height,
     dpi, score, dimensions
 
   Exclusions:
-    exclude from search, exclude from classification, exclude from see also, 
+    exclude from search, exclude from classification, exclude from see also,
     exclude from tagging, exclude from Wiki linking, exclude from chat
 
   Counts:
-    annotation count, attachment count, number of duplicates, number of replicants,
-    number of hits
-    `)
+    annotation count, attachment count, number of duplicates,
+    number of replicants, number of hits
+`)
     .addHelpText('after', `
 Examples:
   dt get props ABCD-1234
@@ -97,6 +109,16 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output the preview text')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "name": "string",
+    "recordType": "string",
+    "preview": "string",
+    "length": number
+  }
+
 Examples:
   dt get preview ABCD-1234
   dt get preview ABCD-1234 -l 500 --quiet
@@ -138,6 +160,17 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUIDs')
     .addHelpText('after', `
+JSON Output:
+  [
+    {
+      "uuid": "string",
+      "name": "string",
+      "recordType": "string",
+      "database": "string",
+      "location": "string"
+    }
+  ]
+
 Examples:
   dt get selection
   dt get selection --quiet
@@ -165,6 +198,18 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output words (one per line)')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "name": "string",
+    "wordCount": number,
+    "words": ["string"],
+    "concordance": [
+      { "word": "string", "frequency": number, "weight": number }
+    ]
+  }
+
 Examples:
   dt get concordance ABCD-1234
   dt get concordance ABCD-1234 --sort frequency --limit 25
@@ -202,6 +247,14 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output the value')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "field": "string",
+    "value": "any"
+  }
+
 Examples:
   dt get metadata ABCD-1234 author
   dt get metadata ABCD-1234 reviewer --quiet
@@ -234,6 +287,15 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output field names (one per line)')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "metadata": [
+      { "field": "string", "value": "any" }
+    ]
+  }
+
 Examples:
   dt get metadata-list ABCD-1234
   dt get metadata-list ABCD-1234 --quiet
@@ -277,6 +339,15 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output the transcription text')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "transcription": "string",
+    "raw": "string", // optional
+    "savedUuid": "string" // optional
+  }
+
 Examples:
   dt get transcribe ABCD-1234 --language en
   dt get transcribe ABCD-1234 --ai-cleanup --save -d "Inbox"
@@ -334,6 +405,21 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUIDs')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "relations": [
+      {
+        "uuid": "string",
+        "name": "string",
+        "type": "string",
+        "database": "string",
+        "score": number
+      }
+    ]
+  }
+
 Examples:
   dt get related ABCD-1234
   dt get related ABCD-1234 --by-tags -l 10

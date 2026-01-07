@@ -26,6 +26,24 @@ export function registerOrganizeCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Minimal output')
     .addHelpText('after', `
+JSON Output:
+  {
+    "results": [
+      {
+        "uuid": "string",
+        "success": boolean,
+        "name": "string",
+        "oldName": "string",
+        "tags": ["string"],
+        "summary": "string",
+        "ocrPerformed": boolean,
+        "renamed": boolean,
+        "tagged": boolean,
+        "summarized": boolean
+      }
+    ]
+  }
+
 Examples:
   dt organize ABCD-1234 --auto
   printf "UUID1\\nUUID2\\n" | dt tidy - --tag --summarize

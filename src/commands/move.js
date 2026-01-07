@@ -23,6 +23,25 @@ export function registerMoveCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output moved record UUIDs')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "destination": {
+      "uuid": "string",
+      "name": "string",
+      "database": "string"
+    },
+    "moved": [
+      {
+        "uuid": "string",
+        "name": "string",
+        "newLocation": "string",
+        "database": "string"
+      }
+    ],
+    "errors": [ { "uuid": "string", "error": "string" } ]
+  }
+
 Examples:
   dt move ABCD-1234 --to "/Archive" -d "Research"
   printf "UUID1\\nUUID2\\n" | dt move - --to "/Archive" -d "Research"

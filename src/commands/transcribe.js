@@ -33,6 +33,14 @@ export function registerTranscribeCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output the transcription text')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "transcription": "string",
+    "raw": "string"
+  }
+
 Examples:
   dt transcribe ABCD-1234 --language en
   dt tr ABCD-1234 --ai-cleanup --save -d "Inbox"

@@ -24,6 +24,17 @@ export function registerSummarizeCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output the summary text or UUID')
     .addHelpText('after', `
+JSON Output:
+  [
+    {
+      "uuid": "string",
+      "success": true,
+      "summary": "string", // AI mode
+      "summaryUuid": "string", // Native mode
+      "summaryName": "string" // Native mode
+    }
+  ]
+
 Examples:
   dt summarize ABCD-1234
   dt sum ABCD-1234 --native --type annotations

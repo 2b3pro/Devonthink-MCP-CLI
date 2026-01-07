@@ -22,6 +22,16 @@ export function registerSmartGroupCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUIDs')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "database": "string",
+    "count": number,
+    "smartGroups": [
+      { "name": "string", "uuid": "string", "path": "string" }
+    ]
+  }
+
 Examples:
   dt smartgroup list -d "Test_Database"
   dt smartgroup list -d "Test_Database" -g "/Saved Searches"
@@ -184,6 +194,16 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUIDs')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "smartGroup": "string",
+    "count": number,
+    "items": [
+      { "uuid": "string", "name": "string", "recordType": "string", "path": "string" }
+    ]
+  }
+
 Examples:
   dt smartgroup items "SG Tag Adult" -d "Test_Database"
   dt smartgroup items ABCD-1234 -l 100 --quiet

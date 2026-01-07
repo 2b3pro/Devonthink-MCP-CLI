@@ -27,6 +27,15 @@ export function registerLinkCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Minimal output')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "mode": "link",
+    "linkAdded": boolean,
+    "targetUuid": "string"
+  }
+
 Examples:
   dt link UUID1 UUID2
   dt link UUID1 --no-wiki --no-see-also

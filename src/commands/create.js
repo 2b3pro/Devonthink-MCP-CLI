@@ -38,6 +38,16 @@ export function registerCreateCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUID of created record')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "name": "string",
+    "location": "string",
+    "database": "string",
+    "recordType": "string"
+  }
+
 Examples:
   dt create record -n "Note" -T markdown -d "Inbox" -c "# Title"
   echo "# Note" | dt create record -n "My Note" -d "Inbox" -c -
@@ -131,6 +141,17 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUID of created record')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "name": "string",
+    "location": "string",
+    "database": "string",
+    "recordType": "string",
+    "sourceUrl": "string"
+  }
+
 Examples:
   dt create markdown "https://example.com" -d "Research"
   dt create md "https://example.com" -r -t "clipped"
@@ -185,6 +206,17 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUID of created record')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "name": "string",
+    "location": "string",
+    "database": "string",
+    "recordType": "string",
+    "sourceUrl": "string"
+  }
+
 Examples:
   dt create pdf "https://example.com" -d "Research"
   dt create pdf "https://example.com" -p -w 1024
@@ -240,6 +272,17 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUID of created record')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "name": "string",
+    "location": "string",
+    "database": "string",
+    "recordType": "string",
+    "sourceUrl": "string"
+  }
+
 Examples:
   dt create web "https://example.com" -d "Research"
   dt create clip "https://example.com" -r -t "web"
@@ -290,6 +333,16 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUID of created record')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "name": "string",
+    "location": "string",
+    "database": "string",
+    "recordType": "string"
+  }
+
 Examples:
   dt create bookmark "https://example.com" -n "Example" -d "Inbox"
   dt create bm "/Users/me/file.pdf" -n "File Link" -d "Inbox"
@@ -349,6 +402,19 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUID of created record')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "name": "string",
+    "location": "string",
+    "database": "string",
+    "recordType": "string",
+    "path": "string",
+    "engine": "string",
+    "size": "string"
+  }
+
 Examples:
   dt create image "surreal landscape" -n "Concept Art" -d "Inbox"
   dt create ai-image "city skyline" -n "Skyline" -d "Inbox" -s 1024x1024

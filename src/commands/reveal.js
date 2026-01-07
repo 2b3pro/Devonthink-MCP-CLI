@@ -21,6 +21,18 @@ export function registerRevealCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Suppress output')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "target": "self|parent",
+    "mode": "window|tab|reveal",
+    "revealed": {
+      "uuid": "string",
+      "name": "string",
+      "database": "string"
+    }
+  }
+
 Examples:
   dt reveal ABCD-1234
   dt open ABCD-1234 --mode tab

@@ -18,6 +18,19 @@ export function registerReplicateCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output replicant UUIDs')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "sourceUuid": "string",
+    "replicated": [
+      {
+        "destinationUuid": "string",
+        "replicantUuid": "string"
+      }
+    ],
+    "errors": [ { "uuid": "string", "error": "string" } ]
+  }
+
 Examples:
   dt replicate ABCD-1234 --to UUID-GROUP-1 UUID-GROUP-2
   dt rep ABCD-1234 --to UUID-GROUP-1

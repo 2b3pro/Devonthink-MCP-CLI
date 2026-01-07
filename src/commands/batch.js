@@ -24,6 +24,24 @@ export function registerBatchCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Minimal output')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "requested": number,
+    "returned": number,
+    "results": [
+      {
+        "uuid": "string",
+        "name": "string",
+        "preview": "string",
+        "totalLength": number,
+        "truncated": boolean,
+        "needsOCR": boolean
+      }
+    ],
+    "errors": [ { "uuid": "string", "error": "string" } ]
+  }
+
 Examples:
   dt batch preview -u UUID1 UUID2 -l 500
   printf "UUID1\\nUUID2\\n" | dt batch preview -u -
@@ -65,6 +83,23 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Minimal output')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "verified": number,
+    "results": [
+      {
+        "uuid": "string",
+        "name": "string",
+        "location": "string",
+        "database": "string",
+        "recordType": "string",
+        "tags": ["string"]
+      }
+    ],
+    "errors": [ { "uuid": "string", "error": "string" } ]
+  }
+
 Examples:
   dt batch verify -u UUID1 UUID2
   printf "UUID1\\nUUID2\\n" | dt batch verify -u -

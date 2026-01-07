@@ -24,6 +24,20 @@ export function registerClassifyCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output proposed group UUIDs')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "proposals": [
+      {
+        "uuid": "string",
+        "name": "string",
+        "path": "string",
+        "database": "string"
+      }
+    ]
+  }
+
 Examples:
   dt classify suggest ABCD-1234
   dt classify proposals ABCD-1234 -d "Research" --include-tags
@@ -60,6 +74,22 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUIDs')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "processed": number,
+    "succeeded": number,
+    "results": [
+      {
+        "uuid": "string",
+        "status": "success",
+        "location": "string",
+        "operations": ["string"]
+      }
+    ],
+    "errors": [ { "uuid": "string", "error": "string" } ]
+  }
+
 Examples:
   dt classify batch -i '[{"uuid":"ABCD-1234","destination":"/Inbox"}]'
   cat classify.json | dt classify batch -i -

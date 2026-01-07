@@ -46,6 +46,23 @@ Modifiable properties are marked with their corresponding option flag.
     flag, unread, state, locked
     `)
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "operations": {
+      "renamed": boolean,
+      "tagsModified": boolean,
+      "commentModified": boolean,
+      "customMetadataModified": boolean,
+      "moved": boolean
+    },
+    "newName": "string",
+    "newTags": ["string"],
+    "newComment": "string",
+    "newLocation": "string"
+  }
+
 Examples:
   dt modify ABCD-1234 --name "New Title"
   dt modify ABCD-1234 --add-tag urgent --comment "Review next week"

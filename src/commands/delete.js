@@ -21,6 +21,16 @@ export function registerDeleteCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Suppress output on success')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "deleted": { "uuid": "string", "name": "string" },
+    // OR (for batch delete)
+    "deleted": [ { "uuid": "string", "name": "string" } ],
+    "count": number,
+    "errors": [ { "uuid": "string", "error": "string" } ]
+  }
+
 Examples:
   dt delete ABCD-1234
   printf "UUID1\\nUUID2\\n" | dt delete - --queue

@@ -33,6 +33,20 @@ export function registerQueueCommand(program) {
     .option('--json', 'Output raw JSON')
     .option('--all', 'Include completed tasks')
     .addHelpText('after', `
+JSON Output:
+  {
+    "tasks": [
+      {
+        "uuid": "string",
+        "action": "string",
+        "status": "pending|completed|failed",
+        "params": {},
+        "error": "string"
+      }
+    ],
+    "pendingCount": number
+  }
+
 Examples:
   dt queue status
   dt queue status --all

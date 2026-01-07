@@ -26,6 +26,16 @@ export function registerListCommand(program) {
     .option('--json', 'Output raw JSON')
     .option('--pretty', 'Pretty print JSON output')
     .addHelpText('after', `
+JSON Output:
+  [
+    {
+      "name": "string",
+      "uuid": "string",
+      "path": "string",
+      "isInbox": boolean
+    }
+  ]
+
 Examples:
   dt list databases
   dt list dbs --refresh
@@ -73,6 +83,24 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUIDs')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "group": "string",
+    "uuid": "string",
+    "path": "string",
+    "itemCount": number,
+    "items": [
+      {
+        "uuid": "string",
+        "name": "string",
+        "recordType": "string",
+        "tags": ["string"],
+        "modificationDate": "string"
+      }
+    ]
+  }
+
 Examples:
   dt list group "Research" "/Papers/2024"
   dt list group ABCD-1234 --quiet
@@ -120,6 +148,27 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUIDs')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "folder": "string",
+    "database": "string",
+    "totalCount": number,
+    "returned": number,
+    "items": [
+      {
+        "uuid": "string",
+        "name": "string",
+        "recordType": "string",
+        "path": "string",
+        "additionDate": "string",
+        "size": number,
+        "preview": "string", // optional
+        "needsOCR": boolean // optional
+      }
+    ]
+  }
+
 Examples:
   dt list inbox
   dt list inbox -l 10 --preview 200
@@ -154,6 +203,27 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUIDs')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "tag": "string",
+    "database": "string",
+    "results": [
+      {
+        "uuid": "string",
+        "name": "string",
+        "recordType": "string",
+        "location": "string",
+        "database": "string",
+        "path": "string",
+        "tags": ["string"],
+        "additionDate": "string"
+      }
+    ],
+    "totalCount": number,
+    "returned": number
+  }
+
 Examples:
   dt list tag "inbox"
   dt list tag "research" -d "Research" -l 25

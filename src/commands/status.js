@@ -17,6 +17,14 @@ export function registerStatusCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Exit code only (0=running, 1=not running)')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "running": boolean,
+    "appName": "DEVONthink",
+    "message": "string"
+  }
+
 Examples:
   dt status
   dt status --json

@@ -16,6 +16,15 @@ export function registerExportCommand(program) {
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output the exported path')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "name": "string",
+    "exportedPath": "string",
+    "destination": "string"
+  }
+
 Examples:
   dt export ABCD-1234 -o "/tmp/export"
   dt export ABCD-1234 -o "/tmp/export" --no-metadata
@@ -55,6 +64,15 @@ Examples:
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Minimal output')
     .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "name": "string",
+    "path": "string",
+    "message": "string"
+  }
+
 Examples:
   dt deconsolidate ABCD-1234 -o "/tmp/external"
   dt externalize ABCD-1234
