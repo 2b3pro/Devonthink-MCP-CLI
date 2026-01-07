@@ -99,6 +99,82 @@ Examples:
       }
     });
 
+  // dt get filepath <uuid>
+  get
+    .command('filepath <uuid>')
+    .alias('file')
+    .description('Get the filesystem path of a record')
+    .option('--json', 'Output raw JSON')
+    .option('--pretty', 'Pretty print JSON output')
+    .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "path": "string"
+  }
+
+Examples:
+  dt get filepath ABCD-1234
+  open "$(dt get filepath ABCD-1234)"
+`)
+    .action(async (uuid, options) => {
+      try {
+        await requireDevonthink();
+        const result = await runJxa('read', 'getRecordPath', [uuid, 'filepath']);
+
+        if (result.success && !options.json && !options.pretty) {
+          // Default: just output the path
+          console.log(result.path || '');
+        } else {
+          print(result, options);
+        }
+
+        if (!result.success) process.exit(1);
+      } catch (error) {
+        printError(error, options);
+        process.exit(1);
+      }
+    });
+
+  // dt get dbpath <uuid>
+  get
+    .command('dbpath <uuid>')
+    .alias('location')
+    .description('Get the database location path of a record')
+    .option('--json', 'Output raw JSON')
+    .option('--pretty', 'Pretty print JSON output')
+    .addHelpText('after', `
+JSON Output:
+  {
+    "success": true,
+    "uuid": "string",
+    "location": "string",
+    "database": "string"
+  }
+
+Examples:
+  dt get dbpath ABCD-1234
+`)
+    .action(async (uuid, options) => {
+      try {
+        await requireDevonthink();
+        const result = await runJxa('read', 'getRecordPath', [uuid, 'dbpath']);
+
+        if (result.success && !options.json && !options.pretty) {
+          // Default: output database:location format
+          console.log(`${result.database}:${result.location}`);
+        } else {
+          print(result, options);
+        }
+
+        if (!result.success) process.exit(1);
+      } catch (error) {
+        printError(error, options);
+        process.exit(1);
+      }
+    });
+
   // dt get preview <uuid>
   get
     .command('preview <uuid>')

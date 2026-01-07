@@ -115,7 +115,7 @@ dt queue execute
 
 ### Management
 - `dt search`: High-speed full-text, tag, URL, or metadata search.
-- `dt get`: Retrieve props, text content, selection, or concordance.
+- `dt get`: Retrieve props, filepath, dbpath, text content, selection, or concordance.
 - `dt create`: Create records, markdown from URLs, or AI-generated images.
 - `dt smartgroup`: Create, update, list, and bulk-operate on smart groups.
 - `dt smartgroup delete-items "SG Tag Adult" -d "Test_Database"`: Delete all items in a smart group.
