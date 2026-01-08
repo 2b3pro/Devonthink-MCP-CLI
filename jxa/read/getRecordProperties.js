@@ -1,6 +1,6 @@
 #!/usr/bin/env osascript -l JavaScript
 // Get all properties of a DEVONthink record
-// Usage: osascript -l JavaScript getRecordProperties.js <uuid>
+// Usage: osascript -l JavaScript getRecordProperties.js <uuid> [fields]
 
 ObjC.import("Foundation");
 
@@ -16,18 +16,80 @@ function getProperty(record, propName, isFunction = true) {
   }
 }
 
-const uuidArg = getArg(4, null);
+function getParentGroup(app, record) {
+  try {
+    if (record.locationGroup) {
+      const group = record.locationGroup();
+      if (group) return group;
+    }
+  } catch (e) {}
 
-if (!uuidArg) {
+  try {
+    const location = record.location ? record.location() : null;
+    if (!location) return null;
+    const database = record.database ? record.database() : app.currentDatabase();
+    return resolveGroup(app, location, database);
+  } catch (e) {
+    return null;
+  }
+}
+
+function prefixDatabasePath(dbName, value) {
+  if (!value || !dbName) return value || null;
+  const trimmed = String(value).replace(/\/+$/, '');
+  const normalized = trimmed.startsWith("/") ? trimmed.slice(1) : trimmed;
+  if (!normalized) return dbName;
+  if (normalized === dbName || normalized.startsWith(dbName + "/")) return normalized;
+  return dbName + "/" + normalized;
+}
+
+const uuidArg = getArg(4, null);
+const fieldsArg = getArg(5, null);
+
+let uuid = null;
+let fields = null;
+
+if (uuidArg && uuidArg.trim().startsWith('{')) {
+  try {
+    const parsed = JSON.parse(uuidArg);
+    uuid = parsed.uuid || null;
+    fields = Array.isArray(parsed.fields) ? parsed.fields : null;
+  } catch (e) {
+    uuid = uuidArg;
+  }
+} else {
+  uuid = uuidArg;
+}
+
+if (fieldsArg) {
+  const trimmed = fieldsArg.trim();
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(fieldsArg);
+      fields = Array.isArray(parsed.fields) ? parsed.fields : (Array.isArray(parsed) ? parsed : fields);
+    } catch (e) {
+      fields = fieldsArg.split(',').map(s => s.trim()).filter(Boolean);
+    }
+  } else {
+    fields = fieldsArg.split(',').map(s => s.trim()).filter(Boolean);
+  }
+}
+
+if (!uuid) {
   JSON.stringify({ success: false, error: "Usage: getRecordProperties.js <uuid>" });
 } else {
   const app = Application("DEVONthink");
-  const uuid = extractUuid(uuidArg);
-  const record = app.getRecordWithUuid(uuid);
+  const cleanUuid = extractUuid(uuid);
+  const record = app.getRecordWithUuid(cleanUuid);
 
   if (!record) {
-    JSON.stringify({ success: false, error: "Record not found: " + uuid });
+    JSON.stringify({ success: false, error: "Record not found: " + cleanUuid });
   } else {
+    const parentGroup = getParentGroup(app, record);
+    const parentLocation = getProperty(record, 'location');
+    const databaseName = getProperty(record, 'database') ? record.database().name() : null;
+    const locationWithName = getProperty(record, 'locationWithName');
+    const locationValue = locationWithName || parentLocation;
     const props = {
       success: true,
       // Identity
@@ -38,8 +100,15 @@ if (!uuidArg) {
       
       // Location
       path: getProperty(record, 'path'),
-      location: getProperty(record, 'location'),
-      database: getProperty(record, 'database') ? record.database().name() : 'N/A',
+      location: prefixDatabasePath(databaseName, locationValue),
+      locationWithName: prefixDatabasePath(databaseName, locationWithName),
+      database: databaseName || 'N/A',
+      parentUuid: parentGroup && parentGroup.uuid ? parentGroup.uuid() : null,
+      parentName: parentGroup && parentGroup.name ? parentGroup.name() : null,
+      parentPath: prefixDatabasePath(
+        databaseName,
+        parentGroup && parentGroup.path ? (parentGroup.path() || parentLocation) : parentLocation
+      ),
       
       // Type & Content Info
       recordType: getProperty(record, 'recordType'),
@@ -103,6 +172,18 @@ if (!uuidArg) {
     props.doi = getProperty(record, 'digitalObjectIdentifier');
     props.isbn = getProperty(record, 'isbn');
 
-    JSON.stringify(props, null, 2);
+    if (fields && fields.length > 0) {
+      const filtered = { success: true };
+      fields.forEach(field => {
+        if (Object.prototype.hasOwnProperty.call(props, field)) {
+          filtered[field] = props[field];
+        } else {
+          filtered[field] = null;
+        }
+      });
+      JSON.stringify(filtered, null, 2);
+    } else {
+      JSON.stringify(props, null, 2);
+    }
   }
 }

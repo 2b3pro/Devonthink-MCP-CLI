@@ -167,11 +167,16 @@ Variables like "$1.uuid" can be used to reference results of previous tasks.`,
   },
   {
     name: "get_record_properties",
-    description: "Get detailed metadata for a specific record (tags, comment, dates, path, etc.).",
+    description: "Get detailed metadata for a specific record (additionDate, aliases, altitude, annotationCount, attachmentCount, batesNumber, characterCount, comment, creationDate, database, doi, dpi, duration, encrypted, excludeFromChat, excludeFromClassification, excludeFromSearch, excludeFromSeeAlso, excludeFromTagging, excludeFromWikiLinking, filename, flag, height, id, indexed, isbn, kind, label, latitude, location, locationWithName, locked, longitude, mimeType, modificationDate, name, numberOfDuplicates, numberOfReplicants, openingDate, pageCount, parentName, parentPath, parentUuid, path, pending, rating, recordType, score, size, state, tags, unread, url, uuid, width, wordCount).",
     inputSchema: {
       type: "object",
       properties: {
         uuid: { type: "string", description: "The UUID of the record" },
+        fields: {
+          type: "array",
+          items: { type: "string" },
+          description: "Optional list of property keys to return (success is always included). If omitted, all properties are returned."
+        },
       },
       required: ["uuid"],
     },
@@ -520,7 +525,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case "get_record_properties": {
-        const result = await runJxa("read", "getRecordProperties", [args.uuid]);
+        const scriptArgs = [args.uuid];
+        if (Array.isArray(args.fields) && args.fields.length > 0) {
+          scriptArgs.push(JSON.stringify({ fields: args.fields }));
+        }
+        const result = await runJxa("read", "getRecordProperties", scriptArgs);
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       }
 

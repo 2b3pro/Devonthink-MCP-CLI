@@ -130,3 +130,26 @@ In addition to `query`, `database`, and `limit`, the tool accepts these optional
 - `createdAfter`, `createdBefore`
 - `modifiedAfter`, `modifiedBefore`
 - `addedAfter`, `addedBefore`
+
+### get_record_properties params
+
+- `uuid` (string, required)
+- `fields` (string[] optional): limits output to specific properties (always includes `success`)
+
+Available property keys (alphabetical):
+`additionDate`, `aliases`, `altitude`, `annotationCount`, `attachmentCount`, `batesNumber`,
+`characterCount`, `comment`, `creationDate`, `database`, `doi`, `dpi`, `duration`, `encrypted`,
+`excludeFromChat`, `excludeFromClassification`, `excludeFromSearch`, `excludeFromSeeAlso`,
+`excludeFromTagging`, `excludeFromWikiLinking`, `filename`, `flag`, `height`, `id`, `indexed`,
+`isbn`, `kind`, `label`, `latitude`, `location`, `locationWithName`, `locked`, `longitude`, `mimeType`,
+`modificationDate`, `name`, `numberOfDuplicates`, `numberOfReplicants`, `openingDate`,
+`pageCount`, `parentName`, `parentPath`, `parentUuid`, `path`, `pending`, `rating`,
+`recordType`, `score`, `size`, `state`, `tags`, `unread`, `url`, `uuid`, `width`, `wordCount`
+
+Example:
+```json
+{
+  "uuid": "ABCD-1234",
+  "fields": ["uuid", "name", "recordType", "parentUuid"]
+}
+```

@@ -23,6 +23,7 @@ export function registerGetCommand(program) {
     .command('props <uuid>')
     .alias('properties')
     .description('Get all properties of a record')
+    .option('--fields <fields>', 'Comma-separated list of properties to return')
     .option('--json', 'Output raw JSON')
     .option('--pretty', 'Pretty print JSON output')
     .option('-q, --quiet', 'Only output UUID')
@@ -70,18 +71,36 @@ Available properties by category:
   Counts:
     annotation count, attachment count, number of duplicates,
     number of replicants, number of hits
+
+Field keys (for --fields):
+  additionDate, aliases, altitude, annotationCount, attachmentCount, batesNumber,
+  characterCount, comment, creationDate, database, doi, dpi, duration, encrypted,
+  excludeFromChat, excludeFromClassification, excludeFromSearch, excludeFromSeeAlso,
+  excludeFromTagging, excludeFromWikiLinking, filename, flag, height, id, indexed,
+  isbn, kind, label, latitude, location, locationWithName, locked, longitude, mimeType,
+  modificationDate, name, numberOfDuplicates, numberOfReplicants, openingDate,
+  pageCount, parentName, parentPath, parentUuid, path, pending, rating,
+  recordType, score, size, state, tags, unread, url, uuid, width, wordCount
 `)
     .addHelpText('after', `
 Examples:
   dt get props ABCD-1234
   dt get props x-devonthink-item://ABCD-1234 --json
+  dt get props ABCD-1234 --fields "uuid,name,recordType"
 `)
     .action(async (uuid, options) => {
       try {
         await requireDevonthink();
-        const result = await runJxa('read', 'getRecordProperties', [uuid]);
+        const fields = options.fields
+          ? options.fields.split(',').map(field => field.trim()).filter(Boolean)
+          : null;
+        const args = [uuid];
+        if (fields && fields.length > 0) {
+          args.push(JSON.stringify({ fields }));
+        }
+        const result = await runJxa('read', 'getRecordProperties', args);
         
-        if (result.success) {
+        if (result.success && result.uuid) {
           await trackRecordAccess({
             uuid: result.uuid,
             name: result.name,

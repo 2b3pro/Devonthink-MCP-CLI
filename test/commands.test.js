@@ -62,6 +62,22 @@ describe('DevonThink CLI Commands', () => {
         assert.ok(result.creationDate !== undefined);
       });
 
+      it('should support selecting specific fields', async () => {
+        const result = await runCommand([
+          'get', 'props', testRecordUuid,
+          '--fields', 'uuid,name,recordType,parentUuid,parentName,parentPath,missingField'
+        ]);
+        assert.strictEqual(result.success, true);
+        assert.strictEqual(result.uuid, testRecordUuid);
+        assert.ok(result.name);
+        assert.ok(result.recordType);
+        assert.ok(result.parentUuid !== undefined);
+        assert.ok(result.parentName !== undefined);
+        assert.ok(result.parentPath !== undefined);
+        assert.strictEqual(result.missingField, null);
+        assert.strictEqual(result.mimeType, undefined);
+      });
+
       it('should fail for invalid UUID', async () => {
         const result = await runCommand(['get', 'props', 'INVALID-UUID'], { expectFailure: true });
         assert.strictEqual(result.success, false);

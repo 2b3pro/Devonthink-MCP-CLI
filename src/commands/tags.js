@@ -310,7 +310,14 @@ function generateRulesYaml(analysis, database) {
 export function registerTagsCommand(program) {
   const tags = program
     .command('tags')
-    .description('Tag analysis and normalization');
+    .description('Tag analysis and normalization')
+    .addHelpText('after', `
+Description:
+  This command operates on the global tag list (taxonomy) of a database to clean up,
+  merge, or rename tags globally.
+
+  To intelligently tag or organize specific records (item-level), use the 'organize' command.
+`);
 
   // dt tags list
   tags
