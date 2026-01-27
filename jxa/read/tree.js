@@ -20,22 +20,37 @@ try {
   // System folders to optionally exclude
   const systemFolders = ["_INBOX", "_TRIAGE", "_ARCHIVE", "Tags", "Trash"];
 
-  // Get database
+  // Get starting group and database
   let db;
-  if (params.database) {
-    db = getDatabase(app, params.database);
-  } else {
-    db = app.currentDatabase();
-  }
-
-  if (!db) throw new Error("No database found");
-
-  // Get starting group
   let startGroup;
-  if (params.path && params.path !== "/") {
-    startGroup = resolveGroup(app, params.path, db);
+
+  if (params.groupUuid) {
+    // UUID provided - get group directly and derive database
+    const uuid = extractUuid(params.groupUuid);
+    startGroup = app.getRecordWithUuid(uuid);
+    if (!startGroup) throw new Error("Group not found: " + uuid);
+
+    const recordType = startGroup.recordType();
+    if (recordType !== "group") {
+      throw new Error("UUID does not point to a group (found: " + recordType + ")");
+    }
+
+    db = startGroup.database();
   } else {
-    startGroup = db.root();
+    // Path-based resolution
+    if (params.database) {
+      db = getDatabase(app, params.database);
+    } else {
+      db = app.currentDatabase();
+    }
+
+    if (!db) throw new Error("No database found");
+
+    if (params.path && params.path !== "/") {
+      startGroup = resolveGroup(app, params.path, db);
+    } else {
+      startGroup = db.root();
+    }
   }
 
   // Recursive tree builder
@@ -137,7 +152,7 @@ try {
     return output;
   }
 
-  const rootName = params.path && params.path !== "/"
+  const rootName = (params.groupUuid || (params.path && params.path !== "/"))
     ? startGroup.name()
     : db.name();
 
@@ -150,7 +165,8 @@ try {
     success: true,
     database: db.name(),
     databaseUuid: db.uuid(),
-    startPath: params.path || "/",
+    startPath: params.groupUuid || params.path || "/",
+    startUuid: startGroup.uuid(),
     depth: maxDepth,
     tree: tree || [],
     text: textOutput

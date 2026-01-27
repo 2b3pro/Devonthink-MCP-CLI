@@ -2016,6 +2016,52 @@ describe('DevonThink CLI Commands', () => {
       // Should have tree characters
       assert.ok(result.text.includes('├') || result.text.includes('└') || result.tree.length === 0);
     });
+
+    it('should accept group UUID as argument', async () => {
+      // First get the Tags group UUID
+      const dbResult = await runCommand(['tree', '-d', TEST_DATABASE.name, '--depth', '1']);
+      const tagsNode = dbResult.tree.find(n => n.name === 'Tags');
+      assert.ok(tagsNode, 'Tags group should exist');
+
+      // Now use UUID to get tree of Tags group
+      const result = await runCommand(['tree', tagsNode.uuid, '--depth', '1']);
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.startPath, tagsNode.uuid);
+      assert.strictEqual(result.startUuid, tagsNode.uuid);
+      assert.ok(result.text.includes('Tags/'));
+    });
+
+    it('should accept x-devonthink-item:// URL as argument', async () => {
+      // Get the Tags group UUID
+      const dbResult = await runCommand(['tree', '-d', TEST_DATABASE.name, '--depth', '1']);
+      const tagsNode = dbResult.tree.find(n => n.name === 'Tags');
+      assert.ok(tagsNode, 'Tags group should exist');
+
+      // Use item URL format
+      const itemUrl = `x-devonthink-item://${tagsNode.uuid}`;
+      const result = await runCommand(['tree', itemUrl, '--depth', '1']);
+      assert.strictEqual(result.success, true);
+      assert.ok(result.text.includes('Tags/'));
+    });
+
+    it('should fail gracefully for non-group UUID', async () => {
+      // Create a markdown record (not a group)
+      const docUuid = await createTestRecord({
+        name: uniqueName('TreeNonGroup'),
+        content: 'Test content'
+      });
+      createdRecords.push(docUuid);
+
+      const result = await runCommand(['tree', docUuid], { expectFailure: true });
+      assert.strictEqual(result.success, false);
+      assert.ok(result.error.includes('does not point to a group'));
+    });
+
+    it('should derive database from UUID (no -d required)', async () => {
+      const result = await runCommand(['tree', testGroupUuid, '--depth', '1']);
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.database, TEST_DATABASE.name);
+    });
   });
 
   // ============================================================

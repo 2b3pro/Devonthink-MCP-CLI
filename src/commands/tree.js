@@ -6,6 +6,7 @@
 
 import { runJxa, requireDevonthink } from '../jxa-runner.js';
 import { print, printError } from '../output.js';
+import { isUuid, extractUuid } from '../utils.js';
 
 export function registerTreeCommand(program) {
   program
@@ -49,6 +50,8 @@ Examples:
   dt tree                           # Full tree of current database
   dt tree -d "Research"             # Tree of specific database
   dt tree "/05—Education"           # Subtree from path
+  dt tree ABC123-DEF456             # Subtree from group UUID
+  dt tree x-devonthink-item://UUID  # Subtree from item URL
   dt tree --depth 2                 # Limit to 2 levels
   dt tree --counts                  # Show item counts
   dt tree --exclude-system          # Hide _INBOX, _TRIAGE, etc.
@@ -64,9 +67,14 @@ Use Cases:
       try {
         await requireDevonthink();
 
+        // Detect if path argument is a UUID
+        const pathArg = path || '/';
+        const pathIsUuid = isUuid(pathArg);
+
         const params = {
           database: options.database || '',
-          path: path || '/',
+          path: pathIsUuid ? '' : pathArg,
+          groupUuid: pathIsUuid ? extractUuid(pathArg) : '',
           depth: parseInt(options.depth, 10) || 10,
           counts: options.counts || false,
           excludeSystem: options.excludeSystem || false,

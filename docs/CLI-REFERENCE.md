@@ -289,7 +289,7 @@ Generate a visual tree of the database folder structure. Useful for LLM context 
 
 | Option | Purpose | Default |
 |--------|---------|---------|
-| `[path]` | Start path (subtree) | / |
+| `[path\|uuid]` | Start path or group UUID (subtree) | / |
 | `-d, --database <name>` | Target database | current |
 | `--depth <n>` | Maximum depth | 10 |
 | `--counts` | Include item counts per folder | |
@@ -307,6 +307,12 @@ dt tree -d "Research"
 
 # Subtree from path, limited depth
 dt tree "/05—Education" --depth 2
+
+# Subtree from group UUID (database auto-derived)
+dt tree ABC123-DEF456
+
+# Subtree from item URL
+dt tree x-devonthink-item://ABC123-DEF456
 
 # With item counts
 dt tree --counts
