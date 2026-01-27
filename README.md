@@ -126,6 +126,7 @@ dt queue execute
 - `dt smartgroup delete-items "SG Tag Adult" -d "Test_Database"`: Delete all items in a smart group.
 - `dt smartgroup modify-items "SG Tag Adult" -d "Test_Database" --add-tag review`: Bulk tag smart group results.
 - `dt tags`: Advanced tag normalization, merging, and deduplication.
+- `dt sheet`: Read and modify CSV/TSV sheet records (get cells, add rows, set values).
 
 ### Batch & Queue
 - `dt queue add`: Add tasks to the persistent queue.

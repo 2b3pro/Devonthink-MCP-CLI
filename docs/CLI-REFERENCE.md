@@ -1,11 +1,11 @@
 ---
 title: DEVONthink CLI Reference
-version: 2.2.17
-updated: 2026-01-17
+version: 2.2.18
+updated: 2026-01-26
 description: CLI for DEVONthink 4. Search, import, organize, tag, transcribe, chat, OCR, versioning, and batch operations.
 ---
 
-# DEVONthink CLI Reference (v2.2.17)
+# DEVONthink CLI Reference (v2.2.18)
 
 > CLI and MCP interface for DEVONthink 4. Search records, import files, organize content, manage tags, transcribe media, AI chat, and batch operations.
 
@@ -1017,6 +1017,108 @@ dt versions restore VERSION-UUID
 # Check versioning status
 dt versions status -d "My Database"
 dt versions status -u ABCD-1234
+```
+
+---
+
+#### `dt sheet` — Sheet/CSV Management
+
+Manage CSV/TSV sheet records in DEVONthink. Sheets are spreadsheet-like documents with columns and rows.
+
+##### `dt sheet get` — Get Sheet Data
+
+Get columns and cell data from a sheet record.
+
+| Option | Description |
+|--------|-------------|
+| `--csv` | Output as CSV format |
+| `--tsv` | Output as TSV format |
+| `--json` | Output raw JSON |
+
+```bash
+# Get sheet data as JSON
+dt sheet get SHEET-UUID
+
+# Export as CSV
+dt sheet get SHEET-UUID --csv > data.csv
+
+# Export as TSV
+dt sheet get SHEET-UUID --tsv
+```
+
+Output includes:
+- `columns`: Array of `{name, type, raw}` (types: text, int, url, uuid, etc.)
+- `cells`: 2D array of cell values
+- `rowCount`, `columnCount`
+
+##### `dt sheet get-cell` — Get Specific Cell
+
+| Option | Description | Required |
+|--------|-------------|----------|
+| `-c, --column` | Column (1-based index or name) | Yes |
+| `-r, --row` | Row (1-based index) | Yes |
+
+```bash
+# By index
+dt sheet get-cell SHEET-UUID -c 1 -r 1
+
+# By column name
+dt sheet get-cell SHEET-UUID -c "Name" -r 2
+```
+
+##### `dt sheet set-cell` — Set Cell Value
+
+| Option | Description | Required |
+|--------|-------------|----------|
+| `-c, --column` | Column (1-based index or name) | Yes |
+| `-r, --row` | Row (1-based index) | Yes |
+| `--value` | New cell value | Yes |
+
+```bash
+dt sheet set-cell SHEET-UUID -c 1 -r 1 --value "New Value"
+dt sheet set-cell SHEET-UUID -c "Status" -r 3 --value "Complete"
+```
+
+##### `dt sheet add-row` — Add Row
+
+| Option | Description | Required |
+|--------|-------------|----------|
+| `--cells` | Cell values (comma-separated or JSON array) | Yes |
+| `-p, --position` | Insert position (1-based, default: end) | No |
+
+```bash
+# Append row
+dt sheet add-row SHEET-UUID --cells "Val1,Val2,Val3"
+
+# Insert at position 1 (beginning)
+dt sheet add-row SHEET-UUID --cells '["A","B","C"]' -p 1
+```
+
+##### `dt sheet delete-row` — Delete Row
+
+| Option | Description | Required |
+|--------|-------------|----------|
+| `-p, --position` | Row position to delete (1-based) | Yes |
+
+```bash
+dt sheet delete-row SHEET-UUID -p 3
+```
+
+##### `dt sheet set-rows` — Replace All Rows
+
+Replace all rows in a sheet with new data.
+
+| Option | Description |
+|--------|-------------|
+| `--cells` | 2D JSON array of cell values |
+| `--stdin` | Read from stdin (JSON or CSV) |
+
+```bash
+# Replace with JSON
+dt sheet set-rows SHEET-UUID --cells '[["A","B"],["C","D"]]'
+
+# From file
+cat data.json | dt sheet set-rows SHEET-UUID --stdin
 ```
 
 ---

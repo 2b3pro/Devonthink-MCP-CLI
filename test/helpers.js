@@ -30,7 +30,7 @@ export async function runCommand(args, options = {}) {
 
   try {
     const { stdout, stderr } = await execFileAsync(
-      'node',
+      process.execPath,
       [CLI_PATH, ...args, '--json'],
       {
         timeout,
@@ -79,7 +79,7 @@ export async function runCommandWithStdin(args, stdinInput, options = {}) {
 
   return new Promise((resolve, reject) => {
     const child = execFile(
-      'node',
+      process.execPath,
       [CLI_PATH, ...args, '--json'],
       {
         timeout,
