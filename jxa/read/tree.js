@@ -53,23 +53,33 @@ try {
     }
   }
 
-  // Recursive tree builder
+  // Recursive tree builder using batch property access
+  // Element specifiers (group.children.prop()) fetch all values in a single Apple Event
   function buildTree(group, currentDepth) {
     if (currentDepth > maxDepth) return null;
 
-    const children = group.children();
+    const childSpec = group.children;
+    const count = childSpec.length;
+    if (count === 0) return [];
+
+    // Batch property access: 4 Apple Events instead of 4*N
+    const types = childSpec.recordType();
+    const names = childSpec.name();
+    const uuids = childSpec.uuid();
+    const locs = childSpec.location();
+
+    // Resolve array once for indexed access (recursion, grandchildren)
+    const childArray = childSpec();
+
     const subgroups = [];
-    let itemCount = 0;
 
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i];
-      const recordType = child.recordType();
-
-      const isGroup = recordType === "group";
-      const isSmartGroup = recordType === "smart group";
+    for (let i = 0; i < count; i++) {
+      const rt = types[i];
+      const isGroup = rt === "group";
+      const isSmartGroup = rt === "smart group";
 
       if (isGroup || (includeSmartGroups && isSmartGroup)) {
-        const name = child.name();
+        const name = names[i];
 
         // Skip system folders if requested (only applies to regular groups)
         if (excludeSystem && isGroup && systemFolders.includes(name)) {
@@ -78,40 +88,38 @@ try {
 
         const node = {
           name: name,
-          uuid: child.uuid(),
-          path: child.location() + name,
+          uuid: uuids[i],
+          path: locs[i] + name,
           depth: currentDepth
         };
 
-        // Mark smart groups
         if (isSmartGroup) {
           node.isSmartGroup = true;
         }
 
-        // Only recurse into regular groups (smart groups don't have children in the same way)
+        // Only recurse into regular groups
         if (isGroup) {
-          const childTree = buildTree(child, currentDepth + 1);
+          const childTree = buildTree(childArray[i], currentDepth + 1);
           if (childTree && childTree.length > 0) {
             node.children = childTree;
           }
 
           if (includeCounts) {
-            // Count non-group items in this group
-            const allChildren = child.children();
-            let count = 0;
-            for (let j = 0; j < allChildren.length; j++) {
-              const childType = allChildren[j].recordType();
-              if (childType !== "group" && childType !== "smart group") {
-                count++;
-              }
+            // Batch recordType on grandchildren: 1 Apple Event instead of M
+            const grandSpec = childArray[i].children;
+            const grandCount = grandSpec.length;
+            if (grandCount > 0) {
+              const grandTypes = grandSpec.recordType();
+              node.itemCount = grandTypes.filter(function(t) {
+                return t !== "group" && t !== "smart group";
+              }).length;
+            } else {
+              node.itemCount = 0;
             }
-            node.itemCount = count;
           }
         }
 
         subgroups.push(node);
-      } else {
-        itemCount++;
       }
     }
 

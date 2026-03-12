@@ -72,83 +72,95 @@ if (!jsonArg) {
         return str.split(/[\s,\-&]+/)[0].toUpperCase();
       }
 
-      // Helper: find matching group with fuzzy logic
+      // Helper: find matching group with fuzzy logic using batch property access
       // Prefers regular groups over smart groups (can't file into smart groups)
-      function findMatchingGroup(children, targetName, isLeaf) {
+      function findMatchingGroup(parentGroup, targetName, isLeaf) {
+        const childSpec = parentGroup.children;
+        const count = childSpec.length;
+        if (count === 0) return null;
+
+        // Batch fetch types and names: 2 Apple Events instead of 2*N
+        const types = childSpec.recordType();
+        const names = childSpec.name();
+
         const targetNorm = normalize(targetName);
         const targetLastname = getLastname(targetName);
         const targetFirstWord = getFirstWord(targetName);
         const targetIsAuthor = isAuthorName(targetName);
 
         // Track matches separately for groups vs smart groups
-        let exactGroup = null;
-        let exactSmart = null;
-        let caseGroup = null;
-        let caseSmart = null;
-        let lastnameGroup = null;
-        let lastnameSmart = null;
-        let firstWordGroup = null;
-        let firstWordSmart = null;
+        // Store indices instead of resolved objects to defer resolution
+        let exactGroupIdx = -1;
+        let exactSmartIdx = -1;
+        let caseGroupIdx = -1;
+        let caseSmartIdx = -1;
+        let lastnameGroupIdx = -1;
+        let lastnameSmartIdx = -1;
+        let firstWordGroupIdx = -1;
+        let firstWordSmartIdx = -1;
 
-        for (let i = 0; i < children.length; i++) {
-          const child = children[i];
-          const childType = child.recordType();
+        for (let i = 0; i < count; i++) {
+          const childType = types[i];
           const isGroup = (childType === "group");
           const isSmart = (childType === "smart group");
           if (!isGroup && !isSmart) continue;
 
-          const childName = child.name();
+          const childName = names[i];
           const childNorm = normalize(childName);
 
           // Exact match
           if (childName === targetName) {
-            if (isGroup) { exactGroup = child; break; }
-            else if (!exactSmart) { exactSmart = child; }
+            if (isGroup) { exactGroupIdx = i; break; }
+            else if (exactSmartIdx < 0) { exactSmartIdx = i; }
             continue;
           }
 
           // Case-insensitive match
           if (childNorm === targetNorm) {
-            if (isGroup && !caseGroup) { caseGroup = child; }
-            else if (isSmart && !caseSmart) { caseSmart = child; }
+            if (isGroup && caseGroupIdx < 0) { caseGroupIdx = i; }
+            else if (isSmart && caseSmartIdx < 0) { caseSmartIdx = i; }
             continue;
           }
 
           // For leaf nodes, apply fuzzy matching
           if (isLeaf) {
             if (targetIsAuthor) {
-              // Author matching: same lastname
               const childLastname = getLastname(childName);
               if (childLastname === targetLastname) {
-                if (isGroup && !lastnameGroup) { lastnameGroup = child; }
-                else if (isSmart && !lastnameSmart) { lastnameSmart = child; }
+                if (isGroup && lastnameGroupIdx < 0) { lastnameGroupIdx = i; }
+                else if (isSmart && lastnameSmartIdx < 0) { lastnameSmartIdx = i; }
               }
             } else {
-              // Topic matching: same first word
               const childFirstWord = getFirstWord(childName);
               if (childFirstWord === targetFirstWord && childFirstWord.length > 2) {
-                if (isGroup && !firstWordGroup) { firstWordGroup = child; }
-                else if (isSmart && !firstWordSmart) { firstWordSmart = child; }
+                if (isGroup && firstWordGroupIdx < 0) { firstWordGroupIdx = i; }
+                else if (isSmart && firstWordSmartIdx < 0) { firstWordSmartIdx = i; }
               }
             }
           }
         }
 
         // Prefer regular groups over smart groups at each match level
-        return exactGroup || exactSmart ||
-               caseGroup || caseSmart ||
-               lastnameGroup || lastnameSmart ||
-               firstWordGroup || firstWordSmart ||
-               null;
+        const bestIdx = exactGroupIdx >= 0 ? exactGroupIdx :
+                        exactSmartIdx >= 0 ? exactSmartIdx :
+                        caseGroupIdx >= 0 ? caseGroupIdx :
+                        caseSmartIdx >= 0 ? caseSmartIdx :
+                        lastnameGroupIdx >= 0 ? lastnameGroupIdx :
+                        lastnameSmartIdx >= 0 ? lastnameSmartIdx :
+                        firstWordGroupIdx >= 0 ? firstWordGroupIdx :
+                        firstWordSmartIdx >= 0 ? firstWordSmartIdx : -1;
+
+        // Only resolve the single winning child object
+        if (bestIdx >= 0) return childSpec[bestIdx]();
+        return null;
       }
 
       for (let partIdx = 0; partIdx < pathParts.length; partIdx++) {
         const part = pathParts[partIdx];
         const isLeaf = (partIdx === pathParts.length - 1);
 
-        // Look for existing group with fuzzy matching
-        const children = currentGroup.children();
-        const found = findMatchingGroup(children, part, isLeaf);
+        // Look for existing group with fuzzy matching (batch optimized)
+        const found = findMatchingGroup(currentGroup, part, isLeaf);
 
         if (found) {
           currentGroup = found;

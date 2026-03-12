@@ -33,47 +33,59 @@ if (!jsonArg) {
 
     let results = [];
 
-    // Helper to format record
-    const format = (rec, relationType, score) => ({
-      uuid: rec.uuid(),
-      name: rec.name(),
-      database: rec.database().name(),
-      location: rec.location(),
-      relation: relationType, // incoming, outgoing, similar, byData, byTags
-      score: score || null,
-      path: rec.path()
-    });
+    // Batch-format a list of records using element specifiers
+    // 5 Apple Events total instead of 5*N per-item calls
+    function batchFormat(recs, relationType, scoresFn) {
+      const count = recs.length;
+      if (count === 0) return;
+
+      const recUuids = recs.uuid();
+      const recNames = recs.name();
+      const recLocs = recs.location();
+      const recPaths = recs.path();
+      // database().name() can't be batched in one call — resolve per item
+      // but we can batch database() first, then name()
+      const recDbs = recs.database();
+
+      const sourceUuid = record.uuid();
+
+      for (let i = 0; i < count; i++) {
+        if (recUuids[i] === sourceUuid) continue; // exclude self
+        results.push({
+          uuid: recUuids[i],
+          name: recNames[i],
+          database: recDbs[i].name(),
+          location: recLocs[i],
+          relation: relationType,
+          score: scoresFn ? scoresFn(i, count) : null,
+          path: recPaths[i]
+        });
+      }
+    }
 
     // 1. Incoming References (Backlinks)
     if (type === "incoming" || type === "all") {
-      const incoming = record.incomingReferences();
-      // incomingReferences() returns a list of records
-      for (let i = 0; i < incoming.length; i++) {
-        results.push(format(incoming[i], "incoming"));
+      const incoming = record.incomingReferences;
+      if (incoming.length > 0) {
+        batchFormat(incoming, "incoming", null);
       }
     }
 
     // 2. Outgoing References (Wiki Links / Citations)
     if (type === "outgoing" || type === "all") {
-      const outgoing = record.outgoingReferences();
-      for (let i = 0; i < outgoing.length; i++) {
-        results.push(format(outgoing[i], "outgoing"));
+      const outgoing = record.outgoingReferences;
+      if (outgoing.length > 0) {
+        batchFormat(outgoing, "outgoing", null);
       }
     }
 
     // 3. Similar Records (AI "See Also")
     if (type === "similar" || type === "all") {
-      // app.compare(record) returns a list of records sorted by relevance
       const similar = app.compare(record);
-      // Determine how many to take
-      const count = similar.length;
-      // We don't get a raw score easily from JXA compare(), usually just the list ordered by score.
-      // We can mock a rank score or just leave it null.
-      for (let i = 0; i < count; i++) {
-        // Exclude the record itself if it appears
-        if (similar[i].uuid() !== record.uuid()) {
-           results.push(format(similar[i], "similar", (count - i) / count)); // Mock normalized score
-        }
+      if (similar.length > 0) {
+        batchFormat(similar, "similar", function(i, count) {
+          return (count - i) / count; // Mock normalized score by rank
+        });
       }
     }
 
@@ -82,11 +94,10 @@ if (!jsonArg) {
       const classifyOpts = { record: record, comparison: "data comparison" };
       if (targetDb) classifyOpts.in = targetDb;
       const proposals = app.classify(classifyOpts);
-      const count = proposals.length;
-      for (let i = 0; i < count; i++) {
-        if (proposals[i].uuid() !== record.uuid()) {
-          results.push(format(proposals[i], "byData", (count - i) / count));
-        }
+      if (proposals.length > 0) {
+        batchFormat(proposals, "byData", function(i, count) {
+          return (count - i) / count;
+        });
       }
     }
 
@@ -95,11 +106,10 @@ if (!jsonArg) {
       const classifyOpts = { record: record, comparison: "tags comparison" };
       if (targetDb) classifyOpts.in = targetDb;
       const proposals = app.classify(classifyOpts);
-      const count = proposals.length;
-      for (let i = 0; i < count; i++) {
-        if (proposals[i].uuid() !== record.uuid()) {
-          results.push(format(proposals[i], "byTags", (count - i) / count));
-        }
+      if (proposals.length > 0) {
+        batchFormat(proposals, "byTags", function(i, count) {
+          return (count - i) / count;
+        });
       }
     }
 
