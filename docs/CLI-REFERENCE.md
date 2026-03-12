@@ -1,11 +1,11 @@
 ---
 title: DEVONthink CLI Reference
-version: 2.2.18
-updated: 2026-01-26
+version: 2.2.19
+updated: 2026-03-11
 description: CLI for DEVONthink 4. Search, import, organize, tag, transcribe, chat, OCR, versioning, and batch operations.
 ---
 
-# DEVONthink CLI Reference (v2.2.18)
+# DEVONthink CLI Reference (v2.2.19)
 
 > CLI and MCP interface for DEVONthink 4. Search records, import files, organize content, manage tags, transcribe media, AI chat, and batch operations.
 
@@ -62,6 +62,24 @@ dt organize ABCD-1234 --auto
 
 # List databases
 dt list databases
+```
+
+## Global Options
+
+| Option | Purpose | Default |
+|--------|---------|---------|
+| `--timeout <ms>` | JXA script timeout in milliseconds | 60000 |
+| `-v, --version` | Show version number | |
+
+The timeout can also be set via the `DT_TIMEOUT` environment variable. The `--timeout` flag takes precedence.
+
+```bash
+# Allow 2 minutes for large operations
+dt --timeout 120000 tree -d "BigDB" --depth 3 --counts
+
+# Or via environment variable
+export DT_TIMEOUT=120000
+dt list group "BigDB" "/" --depth 2
 ```
 
 ## Commands

@@ -52,9 +52,16 @@ export function createProgram() {
     .name('dt')
     .description('Command-line and MCP interface for DEVONthink 4')
     .version(VERSION, '-v, --version', 'Show version number')
+    .option('--timeout <ms>', 'JXA script timeout in milliseconds (default: 60000, env: DT_TIMEOUT)')
     .configureHelp({
       sortSubcommands: true,
       sortOptions: true
+    })
+    .hook('preAction', (thisCommand) => {
+      const opts = thisCommand.optsWithGlobals();
+      if (opts.timeout) {
+        process.env.DT_TIMEOUT = opts.timeout;
+      }
     });
 
   // Register all commands

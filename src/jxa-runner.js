@@ -13,14 +13,19 @@ const execFileAsync = promisify(execFile);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const JXA_DIR = resolve(__dirname, '..', 'jxa');
 
+// Default timeout in milliseconds (overridable via DT_TIMEOUT env or --timeout flag)
+const DEFAULT_TIMEOUT = 60000;
+
 /**
  * Run a JXA script and return the parsed JSON result
  * @param {string} category - Script category (read, write, utils)
  * @param {string} scriptName - Script filename (without .js)
  * @param {string[]} args - Arguments to pass to the script
+ * @param {object} [options] - Optional settings
+ * @param {number} [options.timeout] - Timeout in ms (default: 60000, or DT_TIMEOUT env)
  * @returns {Promise<object>} Parsed JSON response
  */
-export async function runJxa(category, scriptName, args = []) {
+export async function runJxa(category, scriptName, args = [], options = {}) {
   const scriptPath = resolve(JXA_DIR, category, `${scriptName}.js`);
   const helpersPath = resolve(JXA_DIR, 'utils', 'helpers.js');
 
@@ -40,7 +45,7 @@ export async function runJxa(category, scriptName, args = []) {
       'osascript',
       ['-l', 'JavaScript', '-e', fullScript, '--', ...args],
       {
-        timeout: 60000, // 60 second timeout
+        timeout: options.timeout || parseInt(process.env.DT_TIMEOUT, 10) || DEFAULT_TIMEOUT,
         maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large results
       }
     );
