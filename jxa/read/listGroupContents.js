@@ -96,49 +96,64 @@ if (!arg1) {
       throw new Error("Not a group: " + recordType);
     }
 
-    // Collect items with recursive traversal
+    // Collect items with recursive traversal using batch property access
+    // Each batch call (e.g. children.uuid()) is a single Apple Event for all children,
+    // vs per-item calls which are N separate Apple Events.
     // depth=1 means direct children only (level 0)
     // depth=2 means children and grandchildren (levels 0-1)
     // depth=N means levels 0 through N-1
     const items = [];
 
     function collectItems(parentGroup, currentLevel) {
-      // currentLevel is 0-indexed, maxDepth is 1-indexed
-      // So depth=1 allows level 0, depth=2 allows levels 0-1, etc.
       if (currentLevel >= maxDepth) return;
 
-      const children = parentGroup.children();
-      for (let i = 0; i < children.length; i++) {
-        const c = children[i];
-        const cType = c.recordType();
+      // Use element specifier (no parens) for batch property access:
+      // parentGroup.children.uuid() = 1 Apple Event for all UUIDs
+      // vs parentGroup.children()[i].uuid() = N Apple Events
+      const childSpec = parentGroup.children;
+      const count = childSpec.length;
+      if (count === 0) return;
+
+      // Batch property access: 4 Apple Events instead of 4*N
+      const uuids = childSpec.uuid();
+      const names = childSpec.name();
+      const types = childSpec.recordType();
+      const locations = childSpec.location();
+
+      // Resolve the array once for indexed access (recursion, grandchildren)
+      const childArray = childSpec();
+
+      for (let i = 0; i < count; i++) {
+        const cType = types[i];
         const isGroup = cType === "group" || cType === "smart group";
 
         const item = {
-          uuid: c.uuid(),
-          name: c.name(),
+          uuid: uuids[i],
+          name: names[i],
           type: cType,
           level: currentLevel,
-          path: c.location() + c.name()
+          path: locations[i] + names[i]
         };
 
-        // Include itemCount for groups
+        // Include itemCount for groups via batch recordType on grandchildren
         if (isGroup) {
-          const groupChildren = c.children();
-          let docCount = 0;
-          for (let j = 0; j < groupChildren.length; j++) {
-            const childType = groupChildren[j].recordType();
-            if (childType !== "group" && childType !== "smart group") {
-              docCount++;
-            }
+          const grandSpec = childArray[i].children;
+          const grandCount = grandSpec.length;
+          if (grandCount > 0) {
+            const grandTypes = grandSpec.recordType();
+            item.itemCount = grandTypes.filter(function(t) {
+              return t !== "group" && t !== "smart group";
+            }).length;
+          } else {
+            item.itemCount = 0;
           }
-          item.itemCount = docCount;
         }
 
         items.push(item);
 
         // Recurse into groups if we haven't hit max depth
         if (isGroup && currentLevel + 1 < maxDepth) {
-          collectItems(c, currentLevel + 1);
+          collectItems(childArray[i], currentLevel + 1);
         }
       }
     }
