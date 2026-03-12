@@ -118,6 +118,7 @@ dt queue execute
 
 ### Management
 - `dt search`: High-speed full-text, tag, URL, or metadata search.
+- `dt info`: Quick record properties lookup (alias for `dt get props`).
 - `dt get`: Retrieve props, filepath, dbpath, text content, selection, or concordance.
 - `dt create`: Create records, markdown from URLs, or AI-generated images.
 - `dt download markdown`: Create clean markdown from web URLs (with readability/declutter mode).

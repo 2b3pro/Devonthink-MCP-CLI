@@ -39,6 +39,7 @@ import { registerTreeCommand } from './commands/tree.js';
 import { registerOcrCommand } from './commands/ocr.js';
 import { registerVersionsCommand } from './commands/versions.js';
 import { registerSheetCommand } from './commands/sheet.js';
+import { registerInfoCommand } from './commands/info.js';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
@@ -92,6 +93,7 @@ export function createProgram() {
   registerOcrCommand(program);
   registerVersionsCommand(program);
   registerSheetCommand(program);
+  registerInfoCommand(program);
 
   // Add completion command
   program
@@ -109,7 +111,7 @@ export function createProgram() {
  */
 function generateCompletion(shell) {
   const commands = [
-    'search', 'get', 'list', 'create', 'import', 'index', 'export', 'modify', 'update', 'delete',
+    'search', 'get', 'info', 'list', 'create', 'import', 'index', 'export', 'modify', 'update', 'delete',
     'replicate', 'duplicate', 'move', 'merge', 'classify', 'group', 'reveal', 'batch', 'status', 'download', 'reading-list', 'convert', 'deconsolidate', 'transcribe', 'chat', 'link', 'unlink', 'mcp', 'organize', 'summarize', 'tags', 'smartgroup', 'tree', 'ocr', 'versions', 'sheet', 'completion'
   ];
 

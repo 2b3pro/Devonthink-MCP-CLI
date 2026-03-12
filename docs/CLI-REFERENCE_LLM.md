@@ -39,7 +39,8 @@ Note: If you make changes to the actual script at `/Volumes/Xarismata/Projects/C
 dt search q "machine learning" -d "Research"
 
 # Get record properties
-dt get props ABCD-1234
+dt info ABCD-1234              # shortcut
+dt get props ABCD-1234         # full form
 
 # Get record content (plain text)
 dt get preview ABCD-1234
@@ -148,7 +149,9 @@ dt search hash "abc123..."
 
 ### Get Commands
 
-#### `dt get props` — Get Record Properties
+#### `dt info` / `dt get props` — Get Record Properties
+
+> **Shortcut:** `dt info <uuid>` is an alias for `dt get props <uuid>`
 
 | Option | Purpose | Default |
 |--------|---------|---------|
