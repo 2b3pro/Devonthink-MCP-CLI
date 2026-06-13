@@ -39,6 +39,10 @@ DEVONthink 4 includes impressive built-in AI features, so why use `dt`?
 
 ## MCP Server Configuration (Claude, Gemini, ...)
 
+The server supports **two transports**:
+
+**1. stdio** (default — one subprocess per client, ideal for Claude Desktop):
+
 ```json
   "mcpServers": {
     "devonthink": {
@@ -55,6 +59,25 @@ DEVONthink 4 includes impressive built-in AI features, so why use `dt`?
     }
   }
 ```
+
+**2. HTTP Streamable** (shared, long-lived daemon that multiple clients connect to over HTTP). Start it once, then point any number of clients at the URL:
+
+```bash
+dt mcp serve                       # foreground on 127.0.0.1:8765
+dt mcp serve -H 0.0.0.0 -t SECRET  # expose on the LAN with a bearer token
+dt mcp config --http               # print the client config below
+```
+
+```json
+  "mcpServers": {
+    "devonthink": {
+      "type": "http",
+      "url": "http://127.0.0.1:8765/mcp"
+    }
+  }
+```
+
+Endpoints: `POST/GET/DELETE /mcp` (MCP) and `GET /health` (liveness). Config via env: `DT_MCP_PORT` (8765), `DT_MCP_HOST` (127.0.0.1), `DT_MCP_AUTH_TOKEN` (optional Bearer), `DT_MCP_CORS_ORIGINS` (optional allowlist). For an always-on daemon, run `dt mcp serve` from a launchd/pm2 unit.
 
 ## 🤖 AI Integration (MCP)
 This tool includes a **Model Context Protocol (MCP)** server. When added to Claude Desktop, it allows the AI to:

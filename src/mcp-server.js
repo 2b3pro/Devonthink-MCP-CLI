@@ -6,6 +6,9 @@
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { createServer as httpCreateServer } from "node:http";
+import { createServer as netCreateServer } from "node:net";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -27,18 +30,32 @@ const require = createRequire(import.meta.url);
 const pkg = require('../package.json');
 
 
-const server = new Server(
-  {
-    name: "devonthink-mcp",
-    version: pkg.version,
-  },
-  {
-    capabilities: {
-      tools: {},
-      resources: {},
+/**
+ * Create a fresh MCP Server instance with all handlers registered.
+ *
+ * A factory (rather than a single shared instance) is required because the MCP
+ * SDK binds one Server to one transport: every concurrent HTTP Streamable
+ * session needs its own Server. The stdio path uses the same factory.
+ *
+ * @param {string} [nameSuffix] - Appended to the server name (e.g. "-http") to
+ *   distinguish transports in logs.
+ */
+function createMcpServer(nameSuffix = "") {
+  const server = new Server(
+    {
+      name: `devonthink-mcp${nameSuffix}`,
+      version: pkg.version,
     },
-  }
-);
+    {
+      capabilities: {
+        tools: {},
+        resources: {},
+      },
+    }
+  );
+  registerHandlers(server);
+  return server;
+}
 
 /**
  * Tool Definitions
@@ -370,6 +387,11 @@ Variables like "$1.uuid" can be used to reference results of previous tasks.`,
 /**
  * Tool Handlers
  */
+/**
+ * Register all request handlers (tools + resources) on a Server instance.
+ * Called by createMcpServer() for every transport/session.
+ */
+function registerHandlers(server) {
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: TOOLS,
 }));
@@ -847,12 +869,188 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     };
   }
 });
+}
 
 /**
- * Start Server
+ * Start the MCP server on stdio (one client, spawned per session).
+ * This is the default transport used by Claude Desktop and `dt mcp run`.
  */
 export async function runMcpServer() {
+  const server = createMcpServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("DEVONthink MCP Server running on stdio");
+}
+
+/**
+ * Check whether a TCP port is already bound on a host.
+ */
+function isPortInUse(port, host) {
+  return new Promise((resolve) => {
+    const tester = netCreateServer()
+      .once("error", (err) => resolve(err.code === "EADDRINUSE"))
+      .once("listening", () => tester.close(() => resolve(false)))
+      .listen(port, host);
+  });
+}
+
+/**
+ * Constant-time-ish bearer token check for the HTTP transport perimeter.
+ */
+function isBearerAuthorized(authHeader, token) {
+  if (!authHeader) return false;
+  const match = /^Bearer\s+(.+)$/i.exec(authHeader.trim());
+  return !!match && match[1] === token;
+}
+
+/**
+ * Start the MCP server over HTTP Streamable transport (shared, multi-client).
+ *
+ * A single long-lived HTTP daemon that any number of MCP clients connect to via
+ * `{ "type": "http", "url": "http://host:port/mcp" }`, instead of each session
+ * spawning its own stdio subprocess. Mirrors the roam-research-mcp design.
+ *
+ * Endpoints:
+ *   POST/GET/DELETE /mcp  - MCP Streamable HTTP (per-session, Mcp-Session-Id)
+ *   GET             /health - liveness/info probe (no MCP handshake)
+ *
+ * Config (env, overridable by opts):
+ *   DT_MCP_PORT          (default 8765)
+ *   DT_MCP_HOST          (default 127.0.0.1)
+ *   DT_MCP_AUTH_TOKEN    (optional Bearer token; unset = open)
+ *   DT_MCP_CORS_ORIGINS  (optional comma-separated allowlist, or "*")
+ *
+ * @param {{ port?: number|string, host?: string, token?: string }} [opts]
+ */
+export async function runMcpHttpServer(opts = {}) {
+  const port = parseInt(opts.port ?? process.env.DT_MCP_PORT ?? "8765", 10);
+  const host = opts.host ?? process.env.DT_MCP_HOST ?? "127.0.0.1";
+  const authToken = opts.token ?? process.env.DT_MCP_AUTH_TOKEN ?? "";
+  const corsOrigins = (process.env.DT_MCP_CORS_ORIGINS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (await isPortInUse(port, host)) {
+    throw new Error(
+      `Port ${port} (DT_MCP_PORT) is already in use on ${host}. ` +
+      `Stop the process using it, or set DT_MCP_PORT to a free port.`
+    );
+  }
+
+  // One transport per active session, keyed by Mcp-Session-Id.
+  const activeSessions = new Map();
+
+  const httpServer = httpCreateServer(async (req, res) => {
+    // CORS (only when explicitly configured).
+    const origin = req.headers.origin;
+    if (origin && corsOrigins.includes(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+    } else if (corsOrigins.includes("*")) {
+      res.setHeader("Access-Control-Allow-Origin", "*");
+    }
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Mcp-Session-Id");
+    res.setHeader("Access-Control-Expose-Headers", "Mcp-Session-Id");
+
+    if (req.method === "OPTIONS") {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+
+    const requestPath = (req.url || "/").split("?")[0];
+
+    // Liveness probe — no MCP handshake, no auth required.
+    if (req.method === "GET" && requestPath === "/health") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({
+        status: "ok",
+        name: "devonthink-mcp",
+        version: pkg.version,
+        transport: "http-streamable",
+        auth: authToken ? "required" : "none",
+        activeSessions: activeSessions.size,
+      }));
+      return;
+    }
+
+    // Transport auth perimeter: when a token is set, every MCP request must
+    // carry `Authorization: Bearer <token>`. /health and OPTIONS are exempt.
+    if (authToken && !isBearerAuthorized(req.headers["authorization"], authToken)) {
+      res.writeHead(401, { "Content-Type": "application/json", "WWW-Authenticate": "Bearer" });
+      res.end(JSON.stringify({
+        jsonrpc: "2.0",
+        error: { code: -32001, message: "Unauthorized: missing or invalid bearer token" },
+        id: null,
+      }));
+      return;
+    }
+
+    const sessionId = req.headers["mcp-session-id"];
+
+    // Explicit session termination.
+    if (req.method === "DELETE" && sessionId) {
+      const transport = activeSessions.get(sessionId);
+      if (transport) {
+        await transport.close();
+        activeSessions.delete(sessionId);
+        res.writeHead(200);
+        res.end();
+      } else {
+        res.writeHead(404, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Session not found" }));
+      }
+      return;
+    }
+
+    try {
+      // Existing session → reuse its transport.
+      if (sessionId && activeSessions.has(sessionId)) {
+        await activeSessions.get(sessionId).handleRequest(req, res);
+        return;
+      }
+
+      // New session → fresh Server + transport.
+      const mcpServer = createMcpServer("-http");
+      const transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: () =>
+          Math.random().toString(36).substring(2, 15) +
+          Math.random().toString(36).substring(2, 15),
+        onsessioninitialized: (newId) => {
+          activeSessions.set(newId, transport);
+        },
+      });
+
+      transport.onclose = () => {
+        for (const [key, value] of activeSessions.entries()) {
+          if (value === transport) {
+            activeSessions.delete(key);
+            break;
+          }
+        }
+      };
+
+      await mcpServer.connect(transport);
+      await transport.handleRequest(req, res);
+    } catch (error) {
+      if (!res.headersSent) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Internal Server Error" }));
+      }
+    }
+  });
+
+  await new Promise((resolve) => {
+    httpServer.listen(port, host, () => {
+      console.error(
+        `DEVONthink MCP Server (HTTP Streamable) v${pkg.version} listening on ` +
+        `http://${host}:${port}/mcp  (health: http://${host}:${port}/health)` +
+        (authToken ? "  [auth: bearer]" : "")
+      );
+      resolve();
+    });
+  });
+
+  return httpServer;
 }

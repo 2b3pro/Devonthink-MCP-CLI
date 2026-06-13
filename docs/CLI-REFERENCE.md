@@ -989,13 +989,32 @@ dt unlink UUID1 UUID2
 
 #### `dt mcp` — MCP Server
 
+Two transports are supported: **stdio** (default, one subprocess per client) and
+**HTTP Streamable** (a shared daemon multiple clients connect to over HTTP).
+
 ```bash
-# Run MCP server
+# Run MCP server on stdio (Claude Desktop default)
 dt mcp run
 
-# Show Claude Desktop config
-dt mcp config
+# Run MCP server over HTTP Streamable transport (shared, multi-client)
+dt mcp serve                       # foreground on 127.0.0.1:8765
+dt mcp serve -p 9000               # custom port
+dt mcp serve -H 0.0.0.0 -t SECRET  # expose on LAN, require a bearer token
+
+# Show client config
+dt mcp config          # stdio config (Claude Desktop)
+dt mcp config --http   # HTTP Streamable config
 ```
+
+| Option (`serve`) | Purpose | Default / Env |
+|--------|---------|---------|
+| `-p, --port <port>` | Port to bind | `8765` / `DT_MCP_PORT` |
+| `-H, --host <host>` | Host to bind (`0.0.0.0` for LAN) | `127.0.0.1` / `DT_MCP_HOST` |
+| `-t, --token <token>` | Require this Bearer token | `DT_MCP_AUTH_TOKEN` |
+
+HTTP endpoints: `POST/GET/DELETE /mcp` (MCP, per-session via `Mcp-Session-Id`) and
+`GET /health` (liveness probe, no auth). CORS allowlist via `DT_MCP_CORS_ORIGINS`.
+For an always-on daemon, run `dt mcp serve` from a launchd/pm2 unit.
 
 #### `dt versions` — Document Versioning
 

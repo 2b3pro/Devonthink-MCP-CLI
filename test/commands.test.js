@@ -1483,6 +1483,107 @@ describe('DevonThink CLI Commands', () => {
       assert.ok(output.includes('mcpServers'));
       assert.ok(output.includes('devonthink'));
     });
+
+    it('should output HTTP config with --http', async () => {
+      const result = await runCommand(['mcp', 'config', '--http'], { json: false });
+      const output = result.output || JSON.stringify(result);
+      assert.ok(output.includes('"type": "http"'));
+      assert.ok(output.includes('/mcp'));
+    });
+
+    describe('mcp serve (HTTP Streamable transport)', () => {
+      const PORT = 18765;
+      const TOKEN = 'test-bearer-token';
+      const BASE = `http://127.0.0.1:${PORT}`;
+      let child;
+
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+      before(async () => {
+        const { spawn } = await import('node:child_process');
+        const { resolve } = await import('node:path');
+        const cliPath = resolve(import.meta.dirname, '../bin/dt.js');
+        child = spawn(process.execPath, [cliPath, 'mcp', 'serve', '-p', String(PORT), '-t', TOKEN], {
+          stdio: 'ignore',
+        });
+        // Wait for the listener to come up (poll /health).
+        for (let i = 0; i < 20; i++) {
+          await sleep(250);
+          try {
+            const res = await fetch(`${BASE}/health`);
+            if (res.ok) break;
+          } catch { /* not up yet */ }
+        }
+      });
+
+      after(async () => {
+        if (child && !child.killed) child.kill('SIGTERM');
+      });
+
+      it('should respond to /health without auth', async () => {
+        const res = await fetch(`${BASE}/health`);
+        assert.strictEqual(res.status, 200);
+        const body = await res.json();
+        assert.strictEqual(body.status, 'ok');
+        assert.strictEqual(body.transport, 'http-streamable');
+        assert.strictEqual(body.auth, 'required');
+      });
+
+      it('should reject /mcp without bearer token (401)', async () => {
+        const res = await fetch(`${BASE}/mcp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json, text/event-stream' },
+          body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 't', version: '1' } } }),
+        });
+        assert.strictEqual(res.status, 401);
+      });
+
+      it('should complete initialize -> tools/list -> DELETE lifecycle', async () => {
+        const headers = {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json, text/event-stream',
+          'Authorization': `Bearer ${TOKEN}`,
+        };
+
+        // initialize
+        const initRes = await fetch(`${BASE}/mcp`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 't', version: '1' } } }),
+        });
+        assert.strictEqual(initRes.status, 200);
+        const sessionId = initRes.headers.get('mcp-session-id');
+        assert.ok(sessionId, 'expected a session id header');
+
+        // initialized notification
+        await fetch(`${BASE}/mcp`, {
+          method: 'POST',
+          headers: { ...headers, 'mcp-session-id': sessionId },
+          body: JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }),
+        });
+
+        // tools/list
+        const listRes = await fetch(`${BASE}/mcp`, {
+          method: 'POST',
+          headers: { ...headers, 'mcp-session-id': sessionId },
+          body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} }),
+        });
+        assert.strictEqual(listRes.status, 200);
+        const text = await listRes.text();
+        // Response is an SSE stream: "event: message\ndata: {...}"
+        const dataLine = text.split('\n').find((l) => l.startsWith('data: '));
+        const payload = JSON.parse(dataLine.replace(/^data: /, ''));
+        assert.ok(Array.isArray(payload.result.tools));
+        assert.ok(payload.result.tools.length > 0);
+
+        // DELETE session
+        const delRes = await fetch(`${BASE}/mcp`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${TOKEN}`, 'mcp-session-id': sessionId },
+        });
+        assert.strictEqual(delRes.status, 200);
+      });
+    });
   });
 
   // ============================================================

@@ -132,7 +132,7 @@ function generateCompletion(shell) {
     download: ['add', 'url', 'markup', 'json', 'start', 'stop'],
     'reading-list': ['add'],
     chat: ['ask', 'models', 'capabilities'],
-    mcp: ['run', 'config'],
+    mcp: ['run', 'serve', 'config'],
     organize: [],
     summarize: [],
     tags: ['list', 'analyze', 'merge', 'rename', 'delete', 'normalize', 'config'],
@@ -195,7 +195,7 @@ _dt_completions() {
             return 0
             ;;
         mcp)
-            COMPREPLY=( $(compgen -W "run config" -- ${cur}) )
+            COMPREPLY=( $(compgen -W "run serve config" -- ${cur}) )
             return 0
             ;;
         smartgroup|sg)
@@ -341,8 +341,9 @@ _dt() {
     )
 
     mcp_commands=(
-        'run:Run the MCP server'
-        'config:Display Claude Desktop config'
+        'run:Run the MCP server on stdio'
+        'serve:Run the MCP server over HTTP Streamable transport'
+        'config:Display client config'
     )
 
     smartgroup_commands=(
